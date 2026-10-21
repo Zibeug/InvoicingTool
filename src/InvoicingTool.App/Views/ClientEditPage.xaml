@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<views:BasePage
+    x:Class="InvoicingTool.App.Views.ClientEditPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:InvoicingTool.App.Views"
+    xmlns:vm="clr-namespace:InvoicingTool.Presentation.ViewModels;assembly=InvoicingTool.Presentation"
+    xmlns:model="clr-namespace:InvoicingTool.Core.Models;assembly=InvoicingTool.Core"
+    x:DataType="vm:ClientEditViewModel">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Enregistrer" Command="{Binding SaveCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="6">
+            <Label Text="Nom ou raison sociale *" Style="{StaticResource FieldLabel}" />
+            <Entry Text="{Binding Name}" Placeholder="Ex. Mme Martin" />
+            <Label Text="Contact" Style="{StaticResource FieldLabel}" />
+            <Entry Text="{Binding ContactName}" />
+            <Label Text="Téléphone" Style="{StaticResource FieldLabel}" />
+            <Entry Text="{Binding Phone}" Keyboard="Telephone" />
+            <Label Text="E-mail" Style="{StaticResource FieldLabel}" />
+            <Entry Text="{Binding Email}" Keyboard="Email" />
+            <Label Text="Adresse" Style="{StaticResource FieldLabel}" />
+            <Entry Text="{Binding Address}" />
+            <Grid ColumnDefinitions="2*,3*" ColumnSpacing="8">
+                <VerticalStackLayout>
+                    <Label Text="Code postal" Style="{StaticResource FieldLabel}" />
+                    <Entry Text="{Binding PostalCode}" Keyboard="Numeric" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1">
+                    <Label Text="Ville" Style="{StaticResource FieldLabel}" />
+                    <Entry Text="{Binding City}" />
+                </VerticalStackLayout>
+            </Grid>
+            <Label Text="SIRET / n° TVA (client professionnel)" Style="{StaticResource FieldLabel}" />
+            <Entry Text="{Binding CompanyId}" />
+            <Label Text="Notes" Style="{StaticResource FieldLabel}" />
+            <Editor Text="{Binding Notes}" AutoSize="TextChanges" />
+
+            <Button Text="Enregistrer" Command="{Binding SaveCommand}" Margin="0,12,0,0" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8" Margin="0,8,0,0">
+                <Button Text="Nouveau devis" Command="{Binding NewQuoteCommand}" Style="{StaticResource OutlineButton}" />
+                <Button Grid.Column="1" Text="Nouvelle facture" Command="{Binding NewInvoiceCommand}" Style="{StaticResource OutlineButton}" />
+            </Grid>
+
+            <VerticalStackLayout IsVisible="{Binding IsExisting}">
+                <Label Text="Historique" Style="{StaticResource SectionTitle}" />
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Documents}" Spacing="6">
+                    <BindableLayout.EmptyView>
+                        <Label Text="Aucun devis ni facture." Style="{StaticResource Secondary}" />
+                    </BindableLayout.EmptyView>
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="model:CommercialDocument">
+                            <Border Style="{StaticResource Card}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding OpenDocumentCommand, Source={RelativeSource AncestorType={x:Type vm:ClientEditViewModel}}, x:DataType=vm:ClientEditViewModel}"
+                                        CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                                    <Label Text="{Binding DisplayNumber}" FontFamily="OpenSansSemibold" />
+                                    <Label Grid.Column="1" Text="{Binding TotalInclTax, Converter={StaticResource Money}}" FontFamily="OpenSansSemibold" />
+                                    <Label Grid.Row="1" Text="{Binding Title}" Style="{StaticResource Secondary}" />
+                                    <Label Grid.Row="1" Grid.Column="1" Text="{Binding ., Converter={StaticResource StatusText}}"
+                                           TextColor="{Binding ., Converter={StaticResource StatusColor}}" FontSize="13" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+                <Button Text="Supprimer le client" Command="{Binding DeleteCommand}" Style="{StaticResource DangerButton}" Margin="0,16,0,0" />
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</views:BasePage>

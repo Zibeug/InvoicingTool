@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<views:BasePage
+    x:Class="InvoicingTool.App.Views.DocumentEditPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:InvoicingTool.App.Views"
+    xmlns:vm="clr-namespace:InvoicingTool.Presentation.ViewModels;assembly=InvoicingTool.Presentation"
+    x:DataType="vm:DocumentEditViewModel">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Aperçu" Command="{Binding PreviewCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="6">
+
+            <!-- En-tête -->
+            <Border Style="{StaticResource Card}">
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                    <Label Text="{Binding ClientName}" FontFamily="OpenSansSemibold" FontSize="18" />
+                    <Label Grid.Column="1" Text="{Binding StatusLabel}" FontFamily="OpenSansSemibold" />
+                    <Label Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding Number, StringFormat='N° {0}'}" Style="{StaticResource Secondary}" />
+                </Grid>
+            </Border>
+
+            <!-- Informations générales -->
+            <VerticalStackLayout IsEnabled="{Binding IsEditable}" Spacing="6">
+                <Label Text="Objet" Style="{StaticResource FieldLabel}" />
+                <Entry Text="{Binding Subject}" Placeholder="Ex. Peinture salon et couloir" />
+                <Label Text="Adresse du chantier (si différente)" Style="{StaticResource FieldLabel}" />
+                <Entry Text="{Binding SiteAddress}" />
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                    <VerticalStackLayout>
+                        <Label Text="Date" Style="{StaticResource FieldLabel}" />
+                        <DatePicker Date="{Binding IssueDate}" Format="dd/MM/yyyy" />
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="1">
+                        <Label Text="{Binding DueDateLabel}" Style="{StaticResource FieldLabel}" />
+                        <DatePicker Date="{Binding DueDate}" Format="dd/MM/yyyy" />
+                    </VerticalStackLayout>
+                </Grid>
+            </VerticalStackLayout>
+
+            <!-- Lignes -->
+            <Label Text="Prestations" Style="{StaticResource SectionTitle}" />
+            <VerticalStackLayout BindableLayout.ItemsSource="{Binding Lines}" Spacing="8">
+                <BindableLayout.EmptyView>
+                    <Label Text="Aucune ligne. Ajoutez une prestation ci-dessous." Style="{StaticResource Secondary}" />
+                </BindableLayout.EmptyView>
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vm:LineItemViewModel">
+                        <Border Style="{StaticResource Card}">
+                            <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,*,*" ColumnSpacing="6" RowSpacing="2"
+                                  IsEnabled="{Binding IsEditable, Source={RelativeSource AncestorType={x:Type vm:DocumentEditViewModel}}, x:DataType=vm:DocumentEditViewModel}">
+                                <Editor Grid.ColumnSpan="3" Text="{Binding Description}" Placeholder="Désignation" AutoSize="TextChanges" />
+
+                                <VerticalStackLayout Grid.Row="1">
+                                    <Label Text="Quantité" Style="{StaticResource FieldLabel}" />
+                                    <Entry Text="{Binding QuantityText}" Keyboard="Numeric" />
+                                </VerticalStackLayout>
+                                <VerticalStackLayout Grid.Row="1" Grid.Column="1">
+                                    <Label Text="Unité" Style="{StaticResource FieldLabel}" />
+                                    <Entry Text="{Binding Unit}" />
+                                </VerticalStackLayout>
+                                <VerticalStackLayout Grid.Row="1" Grid.Column="2">
+                                    <Label Text="PU HT (€)" Style="{StaticResource FieldLabel}" />
+                                    <Entry Text="{Binding UnitPriceText}" Keyboard="Numeric" />
+                                </VerticalStackLayout>
+
+                                <VerticalStackLayout Grid.Row="2"
+                                                     IsVisible="{Binding ShowVat, Source={RelativeSource AncestorType={x:Type vm:DocumentEditViewModel}}, x:DataType=vm:DocumentEditViewModel}">
+                                    <Label Text="TVA (%)" Style="{StaticResource FieldLabel}" />
+                                    <Entry Text="{Binding VatRateText}" Keyboard="Numeric" />
+                                </VerticalStackLayout>
+                                <VerticalStackLayout Grid.Row="2" Grid.Column="1">
+                                    <Label Text="Remise (%)" Style="{StaticResource FieldLabel}" />
+                                    <Entry Text="{Binding DiscountText}" Keyboard="Numeric" />
+                                </VerticalStackLayout>
+                                <VerticalStackLayout Grid.Row="2" Grid.Column="2" VerticalOptions="End">
+                                    <Label Text="Total HT" Style="{StaticResource FieldLabel}" HorizontalTextAlignment="End" />
+                                    <Label Text="{Binding TotalDisplay}" FontFamily="OpenSansSemibold" HorizontalTextAlignment="End" Margin="0,0,0,10" />
+                                </VerticalStackLayout>
+
+                                <HorizontalStackLayout Grid.Row="3" Grid.ColumnSpan="3" HorizontalOptions="End" Spacing="4"
+                                                       IsVisible="{Binding IsEditable, Source={RelativeSource AncestorType={x:Type vm:DocumentEditViewModel}}, x:DataType=vm:DocumentEditViewModel}">
+                                    <Button Text="Monter" Style="{StaticResource OutlineButton}" Padding="12,0" HeightRequest="36"
+                                            Command="{Binding MoveLineUpCommand, Source={RelativeSource AncestorType={x:Type vm:DocumentEditViewModel}}, x:DataType=vm:DocumentEditViewModel}"
+                                            CommandParameter="{Binding .}" />
+                                    <Button Text="Supprimer" Style="{StaticResource DangerButton}" Padding="12,0" HeightRequest="36"
+                                            Command="{Binding RemoveLineCommand, Source={RelativeSource AncestorType={x:Type vm:DocumentEditViewModel}}, x:DataType=vm:DocumentEditViewModel}"
+                                            CommandParameter="{Binding .}" />
+                                </HorizontalStackLayout>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8" IsVisible="{Binding IsEditable}">
+                <Button Text="+ Ligne libre" Command="{Binding AddLineCommand}" Style="{StaticResource OutlineButton}" />
+                <Button Grid.Column="1" Text="+ Depuis catalogue" Command="{Binding AddFromCatalogCommand}" Style="{StaticResource OutlineButton}" />
+            </Grid>
+
+            <!-- Totaux -->
+            <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
+                    <Label Text="Total HT" />
+                    <Label Grid.Column="1" Text="{Binding TotalExclTaxDisplay}" />
+                    <Label Grid.Row="1" Text="TVA" IsVisible="{Binding ShowVat}" />
+                    <Label Grid.Row="1" Grid.Column="1" Text="{Binding TotalVatDisplay}" IsVisible="{Binding ShowVat}" />
+                    <Label Grid.Row="2" Text="Total TTC" FontFamily="OpenSansSemibold" FontSize="16" />
+                    <Label Grid.Row="2" Grid.Column="1" Text="{Binding TotalInclTaxDisplay}" FontFamily="OpenSansSemibold" FontSize="16" />
+                    <Label Grid.Row="3" Text="Acompte versé (€)" VerticalOptions="Center" />
+                    <Entry Grid.Row="3" Grid.Column="1" Text="{Binding DepositText}" Keyboard="Numeric" WidthRequest="110"
+                           HorizontalTextAlignment="End" IsEnabled="{Binding IsEditable}" />
+                    <Label Grid.Row="4" Text="Net à payer" FontFamily="OpenSansSemibold" />
+                    <Label Grid.Row="4" Grid.Column="1" Text="{Binding AmountDueDisplay}" FontFamily="OpenSansSemibold" />
+                </Grid>
+            </Border>
+
+            <Label Text="Notes / conditions particulières" Style="{StaticResource FieldLabel}" Margin="0,8,0,0" />
+            <Editor Text="{Binding Notes}" AutoSize="TextChanges" IsEnabled="{Binding IsEditable}" />
+
+            <!-- Actions brouillon -->
+            <VerticalStackLayout IsVisible="{Binding IsEditable}" Spacing="8" Margin="0,12,0,0">
+                <Button Text="Enregistrer le brouillon" Command="{Binding SaveCommand}" Style="{StaticResource OutlineButton}" />
+                <Button Text="Émettre (numéroter)" Command="{Binding IssueCommand}" />
+                <Button Text="Supprimer le brouillon" Command="{Binding DeleteCommand}" Style="{StaticResource DangerButton}" />
+            </VerticalStackLayout>
+
+            <!-- Actions document émis -->
+            <VerticalStackLayout IsVisible="{Binding IsEditable, Converter={StaticResource Not}}" Spacing="8" Margin="0,12,0,0">
+                <Button Text="Aperçu et partage" Command="{Binding PreviewCommand}" />
+                <Button Text="Changer le statut" Command="{Binding ChangeStatusCommand}" IsVisible="{Binding CanChangeStatus}"
+                        Style="{StaticResource OutlineButton}" />
+                <Button Text="Facturer ce devis" Command="{Binding ConvertToInvoiceCommand}" IsVisible="{Binding CanConvertToInvoice}" />
+                <Button Text="Dupliquer" Command="{Binding DuplicateCommand}" Style="{StaticResource OutlineButton}" />
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</views:BasePage>

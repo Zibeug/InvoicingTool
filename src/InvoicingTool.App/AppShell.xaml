@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="InvoicingTool.App.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:InvoicingTool.App.Views"
+    Title="Devis &amp; Factures">
+
+    <TabBar>
+        <ShellContent Title="Clients" Icon="tab_clients.png" Route="clients"
+                      ContentTemplate="{DataTemplate views:ClientsPage}" />
+        <ShellContent Title="Devis" Icon="tab_quotes.png" Route="quotes"
+                      ContentTemplate="{DataTemplate views:QuotesPage}" />
+        <ShellContent Title="Factures" Icon="tab_invoices.png" Route="invoices"
+                      ContentTemplate="{DataTemplate views:InvoicesPage}" />
+        <ShellContent Title="Prestations" Icon="tab_catalog.png" Route="catalog"
+                      ContentTemplate="{DataTemplate views:CatalogPage}" />
+        <ShellContent Title="Entreprise" Icon="tab_settings.png" Route="settings"
+                      ContentTemplate="{DataTemplate views:SettingsPage}" />
+    </TabBar>
+
+</Shell>

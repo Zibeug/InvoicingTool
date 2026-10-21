@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<views:BasePage
+    x:Class="InvoicingTool.App.Views.ClientsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:InvoicingTool.App.Views"
+    xmlns:vm="clr-namespace:InvoicingTool.Presentation.ViewModels;assembly=InvoicingTool.Presentation"
+    xmlns:model="clr-namespace:InvoicingTool.Core.Models;assembly=InvoicingTool.Core"
+    x:DataType="vm:ClientsViewModel">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="+ Client" Command="{Binding AddCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="Auto,*">
+        <SearchBar Placeholder="Rechercher (nom, ville, téléphone…)" Text="{Binding SearchText}" />
+
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Clients}" Margin="12,0">
+            <CollectionView.EmptyView>
+                <VerticalStackLayout Padding="24" Spacing="12" HorizontalOptions="Center">
+                    <Label Text="Aucun client pour l'instant." HorizontalTextAlignment="Center" />
+                    <Button Text="Ajouter un client" Command="{Binding AddCommand}" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="model:Client">
+                    <Border Style="{StaticResource Card}" Margin="0,4">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding OpenCommand, Source={RelativeSource AncestorType={x:Type vm:ClientsViewModel}}, x:DataType=vm:ClientsViewModel}"
+                                CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="{Binding Name}" FontFamily="OpenSansSemibold" FontSize="16" />
+                            <Label Text="{Binding FullAddress}" Style="{StaticResource Secondary}" />
+                            <Label Text="{Binding Phone}" Style="{StaticResource Secondary}" />
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</views:BasePage>

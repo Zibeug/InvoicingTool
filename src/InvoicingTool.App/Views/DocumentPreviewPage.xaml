@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<views:BasePage
+    x:Class="InvoicingTool.App.Views.DocumentPreviewPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:InvoicingTool.App.Views"
+    xmlns:vm="clr-namespace:InvoicingTool.Presentation.ViewModels;assembly=InvoicingTool.Presentation"
+    x:DataType="vm:DocumentPreviewViewModel">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Partager" Command="{Binding ShareCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="*,Auto">
+        <WebView x:Name="Browser" />
+        <Button Grid.Row="1" Text="Partager (e-mail, SMS, WhatsApp…)" Command="{Binding ShareCommand}" Margin="12" />
+    </Grid>
+</views:BasePage>

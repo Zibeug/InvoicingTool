@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<views:BasePage
+    x:Class="InvoicingTool.App.Views.ClientPickerPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:InvoicingTool.App.Views"
+    xmlns:vm="clr-namespace:InvoicingTool.Presentation.ViewModels;assembly=InvoicingTool.Presentation"
+    xmlns:model="clr-namespace:InvoicingTool.Core.Models;assembly=InvoicingTool.Core"
+    x:DataType="vm:ClientPickerViewModel">
+
+    <Grid RowDefinitions="Auto,Auto,*">
+        <SearchBar Placeholder="Rechercher un client" Text="{Binding SearchText}" />
+        <Button Grid.Row="1" Text="+ Nouveau client" Command="{Binding NewClientCommand}"
+                Style="{StaticResource OutlineButton}" Margin="12,4" />
+        <CollectionView Grid.Row="2" ItemsSource="{Binding Clients}" Margin="12,0">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="model:Client">
+                    <Border Style="{StaticResource Card}" Margin="0,4">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding SelectCommand, Source={RelativeSource AncestorType={x:Type vm:ClientPickerViewModel}}, x:DataType=vm:ClientPickerViewModel}"
+                                CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="{Binding Name}" FontFamily="OpenSansSemibold" FontSize="16" />
+                            <Label Text="{Binding FullAddress}" Style="{StaticResource Secondary}" />
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</views:BasePage>

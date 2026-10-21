@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<views:BasePage
+    x:Class="InvoicingTool.App.Views.DocumentsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:InvoicingTool.App.Views"
+    xmlns:vm="clr-namespace:InvoicingTool.Presentation.ViewModels;assembly=InvoicingTool.Presentation"
+    xmlns:model="clr-namespace:InvoicingTool.Core.Models;assembly=InvoicingTool.Core"
+    x:DataType="vm:DocumentsViewModel">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="+ Nouveau" Command="{Binding AddCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="Auto,Auto,*">
+        <SearchBar Placeholder="Rechercher (client, numéro, objet)" Text="{Binding SearchText}" />
+        <HorizontalStackLayout Grid.Row="1" Padding="16,4" Spacing="6">
+            <Label Text="En attente :" Style="{StaticResource Secondary}" />
+            <Label Text="{Binding PendingAmount, Converter={StaticResource Money}}" FontFamily="OpenSansSemibold" FontSize="13" />
+        </HorizontalStackLayout>
+        <CollectionView Grid.Row="2" ItemsSource="{Binding Documents}" Margin="12,0">
+            <CollectionView.EmptyView>
+                <VerticalStackLayout Padding="24" Spacing="12" HorizontalOptions="Center">
+                    <Label Text="Aucun document." HorizontalTextAlignment="Center" />
+                    <Button Text="Créer" Command="{Binding AddCommand}" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="model:CommercialDocument">
+                    <Border Style="{StaticResource Card}" Margin="0,4">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding OpenCommand, Source={RelativeSource AncestorType={x:Type vm:DocumentsViewModel}}, x:DataType=vm:DocumentsViewModel}"
+                                CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" RowSpacing="2">
+                            <Label Text="{Binding ClientName}" FontFamily="OpenSansSemibold" FontSize="16" />
+                            <Label Grid.Column="1" Text="{Binding TotalInclTax, Converter={StaticResource Money}}" FontFamily="OpenSansSemibold" FontSize="16" />
+                            <Label Grid.Row="1" Text="{Binding Title}" Style="{StaticResource Secondary}" />
+                            <Label Grid.Row="2" Style="{StaticResource Secondary}">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="{Binding DisplayNumber}" />
+                                        <Span Text=" · " />
+                                        <Span Text="{Binding IssueDate, StringFormat='{0:dd/MM/yyyy}'}" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+                            <Label Grid.Row="2" Grid.Column="1" Text="{Binding ., Converter={StaticResource StatusText}}"
+                                   TextColor="{Binding ., Converter={StaticResource StatusColor}}" FontSize="13" HorizontalTextAlignment="End" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</views:BasePage>
