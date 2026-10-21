@@ -1,18 +1,8 @@
 using System.Globalization;
 using InvoicingTool.Core.Models;
-using InvoicingTool.Core.Services;
 using InvoicingTool.Presentation;
 
 namespace InvoicingTool.App.Converters;
-
-public sealed class MoneyConverter : IValueConverter
-{
-	public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
-		value is decimal amount ? HtmlDocumentRenderer.Money(amount) : string.Empty;
-
-	public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
-		throw new NotSupportedException();
-}
 
 /// <summary>Libellé du statut d'un document (« Brouillon », « À payer »…).</summary>
 public sealed class DocumentStatusTextConverter : IValueConverter

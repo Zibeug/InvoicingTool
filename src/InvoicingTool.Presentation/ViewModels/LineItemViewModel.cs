@@ -10,9 +10,12 @@ namespace InvoicingTool.Presentation.ViewModels;
 /// </summary>
 public partial class LineItemViewModel : ObservableObject
 {
-    public LineItemViewModel(DocumentLine line)
+    private readonly MoneyFormatter _money;
+
+    public LineItemViewModel(DocumentLine line, MoneyFormatter money)
     {
         Line = line;
+        _money = money;
         _description = line.Description;
         _unit = line.Unit;
         _quantityText = DecimalParser.Format(line.Quantity);
@@ -35,7 +38,7 @@ public partial class LineItemViewModel : ObservableObject
 
     public decimal TotalExclTax => DocumentCalculator.LineTotalExclTax(Line);
 
-    public string TotalDisplay => HtmlDocumentRenderer.Money(TotalExclTax);
+    public string TotalDisplay => _money.Format(TotalExclTax);
 
     public bool HasErrors =>
         !DecimalParser.TryParse(QuantityText, out _) || !DecimalParser.TryParse(UnitPriceText, out _) ||

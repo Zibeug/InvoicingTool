@@ -8,7 +8,7 @@
     x:DataType="vm:DocumentEditViewModel">
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Aperçu" Command="{Binding PreviewCommand}" />
+        <ToolbarItem Text="Aperçu / PDF" Command="{Binding PreviewCommand}" />
     </ContentPage.ToolbarItems>
 
     <ScrollView>
@@ -43,6 +43,7 @@
 
             <!-- Lignes -->
             <Label Text="Prestations" Style="{StaticResource SectionTitle}" />
+            <Label Text="{Binding TaxRateHint}" Style="{StaticResource Secondary}" />
             <VerticalStackLayout BindableLayout.ItemsSource="{Binding Lines}" Spacing="8">
                 <BindableLayout.EmptyView>
                     <Label Text="Aucune ligne. Ajoutez une prestation ci-dessous." Style="{StaticResource Secondary}" />
@@ -63,13 +64,14 @@
                                     <Entry Text="{Binding Unit}" />
                                 </VerticalStackLayout>
                                 <VerticalStackLayout Grid.Row="1" Grid.Column="2">
-                                    <Label Text="PU HT (€)" Style="{StaticResource FieldLabel}" />
+                                    <Label Text="PU HT" Style="{StaticResource FieldLabel}" />
                                     <Entry Text="{Binding UnitPriceText}" Keyboard="Numeric" />
                                 </VerticalStackLayout>
 
                                 <VerticalStackLayout Grid.Row="2"
                                                      IsVisible="{Binding ShowVat, Source={RelativeSource AncestorType={x:Type vm:DocumentEditViewModel}}, x:DataType=vm:DocumentEditViewModel}">
-                                    <Label Text="TVA (%)" Style="{StaticResource FieldLabel}" />
+                                    <Label Text="{Binding TaxName, Source={RelativeSource AncestorType={x:Type vm:DocumentEditViewModel}}, x:DataType=vm:DocumentEditViewModel, StringFormat='{0} (%)'}"
+                                           Style="{StaticResource FieldLabel}" />
                                     <Entry Text="{Binding VatRateText}" Keyboard="Numeric" />
                                 </VerticalStackLayout>
                                 <VerticalStackLayout Grid.Row="2" Grid.Column="1">
@@ -103,18 +105,20 @@
 
             <!-- Totaux -->
             <Border Style="{StaticResource Card}" Margin="0,12,0,0">
-                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
                     <Label Text="Total HT" />
                     <Label Grid.Column="1" Text="{Binding TotalExclTaxDisplay}" />
-                    <Label Grid.Row="1" Text="TVA" IsVisible="{Binding ShowVat}" />
+                    <Label Grid.Row="1" Text="{Binding TaxName}" IsVisible="{Binding ShowVat}" />
                     <Label Grid.Row="1" Grid.Column="1" Text="{Binding TotalVatDisplay}" IsVisible="{Binding ShowVat}" />
-                    <Label Grid.Row="2" Text="Total TTC" FontFamily="OpenSansSemibold" FontSize="16" />
-                    <Label Grid.Row="2" Grid.Column="1" Text="{Binding TotalInclTaxDisplay}" FontFamily="OpenSansSemibold" FontSize="16" />
-                    <Label Grid.Row="3" Text="Acompte versé (€)" VerticalOptions="Center" />
-                    <Entry Grid.Row="3" Grid.Column="1" Text="{Binding DepositText}" Keyboard="Numeric" WidthRequest="110"
+                    <Label Grid.Row="2" Text="Arrondi" IsVisible="{Binding HasRounding}" />
+                    <Label Grid.Row="2" Grid.Column="1" Text="{Binding RoundingDisplay}" IsVisible="{Binding HasRounding}" />
+                    <Label Grid.Row="3" Text="Total TTC" FontFamily="OpenSansSemibold" FontSize="16" />
+                    <Label Grid.Row="3" Grid.Column="1" Text="{Binding TotalInclTaxDisplay}" FontFamily="OpenSansSemibold" FontSize="16" />
+                    <Label Grid.Row="4" Text="{Binding DepositLabel}" VerticalOptions="Center" />
+                    <Entry Grid.Row="4" Grid.Column="1" Text="{Binding DepositText}" Keyboard="Numeric" WidthRequest="110"
                            HorizontalTextAlignment="End" IsEnabled="{Binding IsEditable}" />
-                    <Label Grid.Row="4" Text="Net à payer" FontFamily="OpenSansSemibold" />
-                    <Label Grid.Row="4" Grid.Column="1" Text="{Binding AmountDueDisplay}" FontFamily="OpenSansSemibold" />
+                    <Label Grid.Row="5" Text="Net à payer" FontFamily="OpenSansSemibold" />
+                    <Label Grid.Row="5" Grid.Column="1" Text="{Binding AmountDueDisplay}" FontFamily="OpenSansSemibold" />
                 </Grid>
             </Border>
 
@@ -130,7 +134,7 @@
 
             <!-- Actions document émis -->
             <VerticalStackLayout IsVisible="{Binding IsEditable, Converter={StaticResource Not}}" Spacing="8" Margin="0,12,0,0">
-                <Button Text="Aperçu et partage" Command="{Binding PreviewCommand}" />
+                <Button Text="Aperçu et PDF" Command="{Binding PreviewCommand}" />
                 <Button Text="Changer le statut" Command="{Binding ChangeStatusCommand}" IsVisible="{Binding CanChangeStatus}"
                         Style="{StaticResource OutlineButton}" />
                 <Button Text="Facturer ce devis" Command="{Binding ConvertToInvoiceCommand}" IsVisible="{Binding CanConvertToInvoice}" />

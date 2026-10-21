@@ -28,6 +28,7 @@ public class DocumentService(
             DueDate = today.AddDays(type == DocumentType.Quote ? company.QuoteValidityDays : company.PaymentTermDays),
         };
         ApplyClient(document, client);
+        document.ApplyTaxSettings(company);
         await documents.SaveAsync(document).ConfigureAwait(false);
         return document;
     }
@@ -45,7 +46,9 @@ public class DocumentService(
     {
         EnsureEditable(document);
         var company = await settings.GetSettingsAsync().ConfigureAwait(false);
-        DocumentCalculator.ApplyTotals(document, DocumentCalculator.Compute(lines, company.VatExempt));
+        // Un brouillon suit les paramètres courants (pays, devise, TVA) ; ils sont figés à l'émission.
+        document.ApplyTaxSettings(company);
+        DocumentCalculator.ApplyTotals(document, DocumentCalculator.Compute(document, lines));
 
         var now = clock.GetUtcNow().UtcDateTime;
         var db = await database.GetConnectionAsync().ConfigureAwait(false);
@@ -87,7 +90,9 @@ public class DocumentService(
             throw new InvalidOperationException("Impossible d'émettre un document sans ligne.");
 
         var company = await settings.GetSettingsAsync().ConfigureAwait(false);
-        DocumentCalculator.ApplyTotals(document, DocumentCalculator.Compute(lines, company.VatExempt));
+        // Un brouillon suit les paramètres courants (pays, devise, TVA) ; ils sont figés à l'émission.
+        document.ApplyTaxSettings(company);
+        DocumentCalculator.ApplyTotals(document, DocumentCalculator.Compute(document, lines));
 
         var today = Today();
         if (document.Type == DocumentType.Invoice)

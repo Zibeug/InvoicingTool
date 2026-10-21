@@ -21,7 +21,7 @@
             <Picker ItemsSource="{Binding CommonUnits}" SelectedItem="{Binding Unit}" />
             <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                 <VerticalStackLayout>
-                    <Label Text="Prix unitaire HT (€)" Style="{StaticResource FieldLabel}" />
+                    <Label Text="{Binding PriceLabel}" Style="{StaticResource FieldLabel}" />
                     <Entry Text="{Binding UnitPriceText}" Keyboard="Numeric" />
                 </VerticalStackLayout>
                 <VerticalStackLayout Grid.Column="1">
@@ -29,8 +29,7 @@
                     <Entry Text="{Binding VatRateText}" Keyboard="Numeric" />
                 </VerticalStackLayout>
             </Grid>
-            <Label Text="Rappel : 10 % pour les travaux de rénovation d'un logement de plus de 2 ans, 5,5 % pour la rénovation énergétique, 20 % sinon."
-                   Style="{StaticResource Secondary}" Margin="0,4" />
+            <Label Text="{Binding TaxRateHint}" Style="{StaticResource Secondary}" Margin="0,4" />
             <Button Text="Enregistrer" Command="{Binding SaveCommand}" Margin="0,12,0,0" />
             <Button Text="Supprimer" Command="{Binding DeleteCommand}" IsVisible="{Binding IsExisting}" Style="{StaticResource DangerButton}" />
         </VerticalStackLayout>

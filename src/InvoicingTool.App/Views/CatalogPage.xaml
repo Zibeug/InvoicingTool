@@ -5,7 +5,6 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:views="clr-namespace:InvoicingTool.App.Views"
     xmlns:vm="clr-namespace:InvoicingTool.Presentation.ViewModels;assembly=InvoicingTool.Presentation"
-    xmlns:model="clr-namespace:InvoicingTool.Core.Models;assembly=InvoicingTool.Core"
     x:DataType="vm:CatalogViewModel">
 
     <ContentPage.ToolbarItems>
@@ -21,7 +20,7 @@
             </VerticalStackLayout>
         </CollectionView.EmptyView>
         <CollectionView.ItemTemplate>
-            <DataTemplate x:DataType="model:CatalogItem">
+            <DataTemplate x:DataType="vm:CatalogItemRow">
                 <Border Style="{StaticResource Card}" Margin="0,4">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer
@@ -33,15 +32,7 @@
                             <Label Text="{Binding Label}" FontFamily="OpenSansSemibold" />
                             <Label Text="{Binding Description}" Style="{StaticResource Secondary}" />
                         </VerticalStackLayout>
-                        <Label Grid.Column="1" VerticalOptions="Center">
-                            <Label.FormattedText>
-                                <FormattedString>
-                                    <Span Text="{Binding UnitPrice, Converter={StaticResource Money}}" FontFamily="OpenSansSemibold" />
-                                    <Span Text=" / " />
-                                    <Span Text="{Binding Unit}" />
-                                </FormattedString>
-                            </Label.FormattedText>
-                        </Label>
+                        <Label Grid.Column="1" VerticalOptions="Center" Text="{Binding PriceDisplay}" FontFamily="OpenSansSemibold" />
                     </Grid>
                 </Border>
             </DataTemplate>

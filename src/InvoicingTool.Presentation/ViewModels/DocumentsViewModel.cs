@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using InvoicingTool.Core.Data;
 using InvoicingTool.Core.Models;
+using InvoicingTool.Core.Services;
 using InvoicingTool.Presentation.Abstractions;
 
 namespace InvoicingTool.Presentation.ViewModels;
@@ -32,9 +33,9 @@ public abstract partial class DocumentsViewModel : ViewModelBase
     [ObservableProperty]
     private string? _searchText;
 
-    /// <summary>Montant TTC total des documents affichés en attente (devis à signer / factures impayées).</summary>
+    /// <summary>Montant TTC des documents en attente (devis à signer / factures impayées), par devise.</summary>
     [ObservableProperty]
-    private decimal _pendingAmount;
+    private string _pendingAmountDisplay = string.Empty;
 
     public override Task OnAppearingAsync() => LoadAsync();
 
@@ -47,7 +48,12 @@ public abstract partial class DocumentsViewModel : ViewModelBase
         Documents.Clear();
         foreach (var doc in result)
             Documents.Add(doc);
-        PendingAmount = result.Where(d => d.Status == DocumentStatus.Issued).Sum(d => d.AmountDue);
+        var pending = result
+            .Where(d => d.Status == DocumentStatus.Issued)
+            .GroupBy(d => (d.CurrencyCode, d.CountryCode))
+            .Select(g => new MoneyFormatter(g.Key.CurrencyCode, g.Key.CountryCode).Format(g.Sum(d => d.AmountDue)))
+            .ToList();
+        PendingAmountDisplay = pending.Count == 0 ? "—" : string.Join("  ·  ", pending);
     }
 
     [RelayCommand]

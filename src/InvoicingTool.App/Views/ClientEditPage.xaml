@@ -62,7 +62,7 @@
                                 </Border.GestureRecognizers>
                                 <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
                                     <Label Text="{Binding DisplayNumber}" FontFamily="OpenSansSemibold" />
-                                    <Label Grid.Column="1" Text="{Binding TotalInclTax, Converter={StaticResource Money}}" FontFamily="OpenSansSemibold" />
+                                    <Label Grid.Column="1" Text="{Binding TotalInclTaxDisplay}" FontFamily="OpenSansSemibold" />
                                     <Label Grid.Row="1" Text="{Binding Title}" Style="{StaticResource Secondary}" />
                                     <Label Grid.Row="1" Grid.Column="1" Text="{Binding ., Converter={StaticResource StatusText}}"
                                            TextColor="{Binding ., Converter={StaticResource StatusColor}}" FontSize="13" />

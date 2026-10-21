@@ -20,6 +20,7 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
     private Guid _documentId;
     private CommercialDocument _document = new();
     private CompanySettings _company = new();
+    private MoneyFormatter _money = new(null, null);
     private bool _loaded;
     private bool _deleted;
 
@@ -59,7 +60,13 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
     [ObservableProperty] private string _totalExclTaxDisplay = string.Empty;
     [ObservableProperty] private string _totalVatDisplay = string.Empty;
     [ObservableProperty] private string _totalInclTaxDisplay = string.Empty;
+    [ObservableProperty] private string _roundingDisplay = string.Empty;
+    [ObservableProperty] private bool _hasRounding;
     [ObservableProperty] private string _amountDueDisplay = string.Empty;
+
+    [ObservableProperty] private string _taxName = "TVA";
+    [ObservableProperty] private string? _taxRateHint;
+    [ObservableProperty] private string _depositLabel = "Acompte versé";
 
     public string DueDateLabel => IsQuote ? "Valable jusqu'au" : "Échéance";
 
@@ -79,6 +86,10 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
             return;
         }
         _document = document;
+        // Un brouillon suit le pays, la devise et le régime de TVA actuels ; un document émis garde les siens.
+        if (document.IsEditable)
+            document.ApplyTaxSettings(_company);
+        _money = MoneyFormatter.For(document);
 
         Subject = document.Title;
         SiteAddress = document.SiteAddress;
@@ -114,7 +125,7 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
             DocumentId = _document.Id,
             Quantity = 1,
             Unit = "u",
-            VatRate = _company.VatExempt ? 0m : _company.DefaultVatRate,
+            VatRate = _document.VatExempt ? 0m : _company.DefaultVatRate,
         };
         AddLineViewModel(line);
         RefreshTotals();
@@ -130,7 +141,7 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
             return;
         }
 
-        var labels = items.Select(i => $"{i.Label} — {HtmlDocumentRenderer.Money(i.UnitPrice)}/{i.Unit}").ToList();
+        var labels = items.Select(i => $"{i.Label} — {_money.Format(i.UnitPrice)}/{i.Unit}").ToList();
         var choice = await Dialogs.ChooseAsync("Ajouter une prestation", labels);
         var index = choice is null ? -1 : labels.IndexOf(choice);
         if (index < 0)
@@ -144,7 +155,7 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
             Quantity = 1,
             Unit = item.Unit,
             UnitPrice = item.UnitPrice,
-            VatRate = _company.VatExempt ? 0m : item.VatRate,
+            VatRate = _document.VatExempt ? 0m : item.VatRate,
         });
         RefreshTotals();
     });
@@ -279,7 +290,7 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
 
     private void AddLineViewModel(DocumentLine line)
     {
-        var vm = new LineItemViewModel(line);
+        var vm = new LineItemViewModel(line, _money);
         vm.AmountChanged += OnLineAmountChanged;
         Lines.Add(vm);
     }
@@ -296,7 +307,11 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
         IsEditable = _document.IsEditable;
         CanConvertToInvoice = IsQuote && _document.Status is DocumentStatus.Issued or DocumentStatus.Accepted;
         CanChangeStatus = Enum.GetValues<DocumentStatus>().Any(s => DocumentService.CanChangeStatus(_document, s));
-        ShowVat = !_company.VatExempt;
+        var profile = CountryProfiles.Get(_document.CountryCode);
+        ShowVat = !_document.VatExempt;
+        TaxName = profile.TaxName;
+        TaxRateHint = ShowVat && IsEditable ? profile.TaxRateHint : null;
+        DepositLabel = $"Acompte versé ({_money.CurrencySymbol})";
         IssueDate = _document.IssueDate;
         DueDate = _document.DueDate ?? _document.IssueDate;
         OnPropertyChanged(nameof(DueDateLabel));
@@ -305,10 +320,12 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
 
     private void RefreshTotals()
     {
-        var totals = DocumentCalculator.Compute(Lines.Select(l => l.Line), _company.VatExempt);
-        TotalExclTaxDisplay = HtmlDocumentRenderer.Money(totals.TotalExclTax);
-        TotalVatDisplay = HtmlDocumentRenderer.Money(totals.TotalVat);
-        TotalInclTaxDisplay = HtmlDocumentRenderer.Money(totals.TotalInclTax);
-        AmountDueDisplay = HtmlDocumentRenderer.Money(totals.TotalInclTax - DecimalParser.ParseOrZero(DepositText));
+        var totals = DocumentCalculator.Compute(_document, Lines.Select(l => l.Line));
+        TotalExclTaxDisplay = _money.Format(totals.TotalExclTax);
+        TotalVatDisplay = _money.Format(totals.TotalVat);
+        TotalInclTaxDisplay = _money.Format(totals.TotalInclTax);
+        HasRounding = totals.RoundingAdjustment != 0;
+        RoundingDisplay = _money.Format(totals.RoundingAdjustment);
+        AmountDueDisplay = _money.Format(totals.TotalInclTax - DecimalParser.ParseOrZero(DepositText));
     }
 }

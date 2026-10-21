@@ -16,10 +16,29 @@ Les données sont stockées dans une base **SQLite locale** sur le téléphone ;
   - **transformation d'un devis en facture** en un geste, duplication d'un document ;
   - sauvegarde automatique en quittant l'écran.
 - **Catalogue de prestations** : « Peinture murs 2 couches — 24 €/m² », réutilisable pour remplir un devis en quelques secondes.
-- **Aperçu** du document à montrer au client sur le téléphone, avec zone « Bon pour accord », et **partage**
-  (e-mail, SMS, WhatsApp…) sous forme de page HTML imprimable.
-- **Mon entreprise** : coordonnées, SIRET, assurance décennale, IBAN, franchise de TVA (art. 293 B du CGI),
-  délais par défaut, préfixes de numérotation, mentions de pénalités de retard.
+- **Aperçu** du document à montrer au client sur le téléphone, avec zone « Bon pour accord ».
+- **Export PDF** (A4, polices intégrées, en-tête de tableau répété sur chaque page) : ouverture dans le lecteur
+  PDF du téléphone (impression) ou **envoi** par e-mail, SMS, WhatsApp…
+- **Plusieurs pays et devises** : France, Suisse, Belgique, Luxembourg ou « Autre pays » (réglages libres).
+  Choisir un pays propose sa devise, ses taux de TVA, ses mentions légales et ses usages ; tout reste modifiable.
+- **Mon entreprise** : coordonnées, identifiant (SIRET, IDE, BCE…), assurance, IBAN, non-assujettissement à la TVA
+  avec la mention adaptée au pays, délais par défaut, préfixes de numérotation, conditions de paiement.
+
+### Pays pris en charge
+
+| Pays        | Devise | Taux de TVA proposés     | Particularités |
+|-------------|--------|--------------------------|----------------|
+| France      | EUR    | 20 · 10 · 5,5 · 2,1 %    | SIRET, « TVA non applicable, art. 293 B du CGI », pénalités de retard et indemnité de 40 €, mention « Devis reçu avant l'exécution des travaux » |
+| Suisse      | CHF    | 8,1 · 3,8 · 2,6 %        | IDE (CHE-…), montants au format `CHF 1'234.50`, dates `21.10.2026`, **arrondi du total à 0,05** |
+| Belgique    | EUR    | 21 · 12 · 6 · 0 %        | N° d'entreprise (BCE), régime de franchise des petites entreprises |
+| Luxembourg  | EUR    | 17 · 14 · 8 · 3 %        | N° RCS |
+| Autre pays  | au choix | au choix               | libellés génériques |
+
+Devises proposées : EUR, CHF, USD, CAD, GBP, XOF, XAF, MAD, TND, XPF (d'autres codes ISO peuvent être ajoutés
+dans `Currencies`). La TVA est **par ligne** : un même document peut mélanger plusieurs taux, détaillés en pied de document.
+
+Chaque document **fige** sa devise, son pays et son régime de TVA à l'émission : changer ces réglages plus tard
+ne modifie pas les devis et factures déjà émis. Les brouillons, eux, suivent les réglages courants.
 
 ## Architecture
 
@@ -28,8 +47,11 @@ src/
   InvoicingTool.Core/          Modèles, base SQLite (sqlite-net), règles métier — net10.0, sans dépendance MAUI
     Models/                    Client, CommercialDocument (devis/facture), DocumentLine, CatalogItem, CompanySettings
     Data/                      AppDatabase + dépôts (suppression logique)
+    Models/CountryProfile.cs   Règles par pays (taux, mentions, libellés, format, arrondi) ; Currency.cs : devises
     Services/                  DocumentCalculator (montants), DocumentService (cycle de vie, numérotation),
-                               HtmlDocumentRenderer (rendu du document)
+                               MoneyFormatter (devise + format du pays), PrintableDocument (contenu mis en forme),
+                               HtmlDocumentRenderer (aperçu à l'écran)
+    Pdf/                       PdfDocumentRenderer (PDFsharp/MigraDoc, licence MIT, 100 % .NET) + polices OpenSans
   InvoicingTool.Presentation/  ViewModels MVVM (CommunityToolkit.Mvvm) — net10.0, testables sans téléphone
   InvoicingTool.App/           Application .NET MAUI : pages XAML, navigation Shell, services natifs (partage, dialogues)
 tests/
@@ -76,7 +98,9 @@ La base de données est créée automatiquement au premier lancement dans le dos
 
 ## Pistes pour la suite
 
-- Génération **PDF** native (en plus de l'HTML partagé) et **signature du client** au doigt sur le devis.
+- **Signature du client** au doigt sur le devis, intégrée au PDF.
+- **QR-facture suisse** (QR-bill) en bas des factures en CHF.
+- Taxes composées (ex. TPS + TVQ au Québec) : le modèle actuel gère un taux par ligne.
 - **Synchronisation** avec un serveur / autre système (API REST + champs de synchronisation déjà présents).
 - Photos du chantier jointes au devis, relances des factures impayées, factures d'acompte,
   facturation électronique (obligatoire en France à partir de 2026-2027 selon la taille de l'entreprise).

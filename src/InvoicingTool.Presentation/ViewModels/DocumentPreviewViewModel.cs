@@ -1,12 +1,13 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using InvoicingTool.Core.Data;
+using InvoicingTool.Core.Pdf;
 using InvoicingTool.Core.Services;
 using InvoicingTool.Presentation.Abstractions;
 
 namespace InvoicingTool.Presentation.ViewModels;
 
-/// <summary>Aperçu du document tel que le client le verra, avec partage.</summary>
+/// <summary>Aperçu du document tel que le client le verra, avec export et partage en PDF.</summary>
 public partial class DocumentPreviewViewModel(
     DocumentRepository documents,
     DocumentService service,
@@ -14,8 +15,10 @@ public partial class DocumentPreviewViewModel(
     IShareService share,
     IDialogService dialogs) : ViewModelBase(dialogs), IParameterReceiver
 {
+    public const string PdfContentType = "application/pdf";
+
     private Guid _documentId;
-    private string _fileName = "document.html";
+    private PrintableDocument? _printable;
 
     [ObservableProperty]
     private string _html = string.Empty;
@@ -34,17 +37,25 @@ public partial class DocumentPreviewViewModel(
         var lines = await service.GetLinesAsync(document.Id);
         var company = await settings.GetSettingsAsync();
 
+        _printable = PrintableDocument.Build(document, lines, company);
         Title = $"{DisplayText.Type(document.Type)} {document.DisplayNumber}";
-        _fileName = $"{DisplayText.Type(document.Type)}_{document.Number ?? "brouillon"}_{Sanitize(document.ClientName)}.html";
-        Html = HtmlDocumentRenderer.Render(document, lines, company);
+        Html = HtmlDocumentRenderer.Render(_printable);
+    }
+
+    public string PdfFileName => $"{_printable?.FileNameWithoutExtension ?? "document"}.pdf";
+
+    /// <summary>Génère le PDF (hors du thread d'interface : quelques dizaines de millisecondes).</summary>
+    public Task<byte[]> CreatePdfAsync()
+    {
+        var printable = _printable ?? throw new InvalidOperationException("Document introuvable.");
+        return Task.Run(() => PdfDocumentRenderer.Render(printable));
     }
 
     [RelayCommand]
-    private Task ShareAsync() => RunAsync(() => share.ShareHtmlAsync(_fileName, Html, Title));
+    private Task SharePdfAsync() => RunAsync(async () =>
+        await share.ShareFileAsync(PdfFileName, await CreatePdfAsync(), PdfContentType, Title));
 
-    private static string Sanitize(string text)
-    {
-        var invalid = Path.GetInvalidFileNameChars().Concat([' ', '/', '\\']).ToHashSet();
-        return new string(text.Select(c => invalid.Contains(c) ? '_' : c).ToArray());
-    }
+    [RelayCommand]
+    private Task OpenPdfAsync() => RunAsync(async () =>
+        await share.OpenFileAsync(PdfFileName, await CreatePdfAsync(), PdfContentType, Title));
 }

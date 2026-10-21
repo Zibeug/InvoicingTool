@@ -41,6 +41,13 @@ public class CommercialDocument : EntityBase
     /// <summary>Pour une facture créée depuis un devis : identifiant du devis d'origine.</summary>
     public Guid? SourceDocumentId { get; set; }
 
+    // Règles fiscales figées sur le document : changer de pays ou de devise dans les paramètres
+    // ne modifie pas un document déjà émis. Les brouillons suivent les paramètres courants.
+    public string? CurrencyCode { get; set; }
+    public string? CountryCode { get; set; }
+    public bool VatExempt { get; set; }
+    public decimal RoundingIncrement { get; set; }
+
     /// <summary>Acompte déjà versé (TTC), déduit du net à payer.</summary>
     public decimal DepositAmount { get; set; }
 
@@ -57,4 +64,16 @@ public class CommercialDocument : EntityBase
 
     [Ignore]
     public string DisplayNumber => Number ?? "Brouillon";
+
+    [Ignore]
+    public string TotalInclTaxDisplay => Services.MoneyFormatter.For(this).Format(TotalInclTax);
+
+    /// <summary>Recopie les règles fiscales et la devise de l'entreprise sur le document.</summary>
+    public void ApplyTaxSettings(CompanySettings settings)
+    {
+        CurrencyCode = settings.CurrencyCode;
+        CountryCode = settings.CountryCode;
+        VatExempt = settings.VatExempt;
+        RoundingIncrement = settings.RoundingIncrement;
+    }
 }

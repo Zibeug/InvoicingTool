@@ -16,7 +16,7 @@
         <SearchBar Placeholder="Rechercher (client, numéro, objet)" Text="{Binding SearchText}" />
         <HorizontalStackLayout Grid.Row="1" Padding="16,4" Spacing="6">
             <Label Text="En attente :" Style="{StaticResource Secondary}" />
-            <Label Text="{Binding PendingAmount, Converter={StaticResource Money}}" FontFamily="OpenSansSemibold" FontSize="13" />
+            <Label Text="{Binding PendingAmountDisplay}" FontFamily="OpenSansSemibold" FontSize="13" />
         </HorizontalStackLayout>
         <CollectionView Grid.Row="2" ItemsSource="{Binding Documents}" Margin="12,0">
             <CollectionView.EmptyView>
@@ -35,7 +35,7 @@
                         </Border.GestureRecognizers>
                         <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" RowSpacing="2">
                             <Label Text="{Binding ClientName}" FontFamily="OpenSansSemibold" FontSize="16" />
-                            <Label Grid.Column="1" Text="{Binding TotalInclTax, Converter={StaticResource Money}}" FontFamily="OpenSansSemibold" FontSize="16" />
+                            <Label Grid.Column="1" Text="{Binding TotalInclTaxDisplay}" FontFamily="OpenSansSemibold" FontSize="16" />
                             <Label Grid.Row="1" Text="{Binding Title}" Style="{StaticResource Secondary}" />
                             <Label Grid.Row="2" Style="{StaticResource Secondary}">
                                 <Label.FormattedText>

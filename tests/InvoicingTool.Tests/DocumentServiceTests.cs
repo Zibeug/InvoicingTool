@@ -188,8 +188,8 @@ public class DocumentServiceTests
 
         var html = HtmlDocumentRenderer.Render(quote, await t.Service.GetLinesAsync(quote.Id), company);
 
-        Assert.Contains("DEVIS n° D-2026-0001", html);
-        Assert.Contains("1 104,00 €", html); // séparateur de milliers français (espace fine insécable)
+        Assert.Contains("DEVIS n&#176; D-2026-0001", html);
+        Assert.Contains("1&#160;104,00&#160;€", html); // espaces insécables entre milliers et devant la devise
         Assert.Contains("&lt;script&gt;Dupont&lt;/script&gt;", html);
         Assert.DoesNotContain("<script>", html);
         Assert.Contains("Bon pour accord", html);

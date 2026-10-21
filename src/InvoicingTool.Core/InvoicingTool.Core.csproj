@@ -9,6 +9,15 @@
 
   <ItemGroup>
     <PackageReference Include="sqlite-net-pcl" Version="1.11.285" />
+    <!-- Génération PDF 100 % .NET (licence MIT) : fonctionne sur Android et iOS sans dépendance native. -->
+    <PackageReference Include="PDFsharp-MigraDoc" Version="6.2.4" />
+    <!-- Remplace la version 8.0.1 tirée par PDFsharp, qui a des vulnérabilités connues. -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Polices intégrées au PDF : rendu identique sur tous les téléphones. -->
+    <EmbeddedResource Include="Fonts\*.ttf" LogicalName="InvoicingTool.Fonts.%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

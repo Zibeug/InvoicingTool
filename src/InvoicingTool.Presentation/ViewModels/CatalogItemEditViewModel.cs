@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using InvoicingTool.Core.Data;
 using InvoicingTool.Core.Models;
+using InvoicingTool.Core.Services;
 using InvoicingTool.Presentation.Abstractions;
 
 namespace InvoicingTool.Presentation.ViewModels;
@@ -32,6 +33,8 @@ public partial class CatalogItemEditViewModel : ViewModelBase, IParameterReceive
     [ObservableProperty] private string _unitPriceText = "0";
     [ObservableProperty] private string _vatRateText = "10";
     [ObservableProperty] private bool _isExisting;
+    [ObservableProperty] private string _priceLabel = "Prix unitaire HT";
+    [ObservableProperty] private string? _taxRateHint;
 
     /// <summary>Unités proposées ; la saisie libre reste possible.</summary>
     public IReadOnlyList<string> CommonUnits { get; } = ["m²", "ml", "h", "j", "u", "forfait", "L", "kg"];
@@ -43,9 +46,13 @@ public partial class CatalogItemEditViewModel : ViewModelBase, IParameterReceive
 
     public override async Task OnAppearingAsync()
     {
+        var company = await _settings.GetSettingsAsync();
+        PriceLabel = $"Prix unitaire HT ({MoneyFormatter.For(company).CurrencySymbol})";
+        TaxRateHint = company.VatExempt ? null : company.Country.TaxRateHint;
+
         if (_itemId is not { } id)
         {
-            VatRateText = DecimalParser.Format((await _settings.GetSettingsAsync()).DefaultVatRate);
+            VatRateText = DecimalParser.Format(company.DefaultVatRate);
             return;
         }
 

@@ -11,7 +11,6 @@
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <conv:MoneyConverter x:Key="Money" />
             <conv:DocumentStatusTextConverter x:Key="StatusText" />
             <conv:DocumentStatusColorConverter x:Key="StatusColor" />
             <conv:InvertedBoolConverter x:Key="Not" />

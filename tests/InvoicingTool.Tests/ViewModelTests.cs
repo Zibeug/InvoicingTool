@@ -47,9 +47,9 @@ public class ViewModelTests
         line.QuantityText = "20,5";
         line.UnitPriceText = "18";
 
-        Assert.Equal("369,00 €", line.TotalDisplay);
-        Assert.Equal("369,00 €", vm.TotalExclTaxDisplay);
-        Assert.Equal("405,90 €", vm.TotalInclTaxDisplay); // TVA 10 % par défaut
+        Assert.Equal("369,00\u00a0€", line.TotalDisplay);
+        Assert.Equal("369,00\u00a0€", vm.TotalExclTaxDisplay);
+        Assert.Equal("405,90\u00a0€", vm.TotalInclTaxDisplay); // TVA 10 % par défaut
 
         await vm.OnDisappearingAsync();
 
