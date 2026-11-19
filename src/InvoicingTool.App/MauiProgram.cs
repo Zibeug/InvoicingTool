@@ -48,6 +48,7 @@ public static class MauiProgram
 		services.AddSingleton<IShareService, ShareService>();
 		services.AddSingleton<IFilePickerService, FilePickerService>();
 		services.AddSingleton<IImagePickerService, ImagePickerService>();
+		services.AddTransient<ISpeechRecognizer, SpeechRecognizer>();
 		services.AddSingleton<StartupCoordinator>();
 
 		// Écrans
@@ -63,6 +64,7 @@ public static class MauiProgram
 		services.AddTransient<SettingsViewModel>().AddTransient<SettingsPage>();
 		services.AddTransient<TermsViewModel>().AddTransient<TermsPage>();
 		services.AddTransient<SignatureViewModel>().AddTransient<SignaturePage>();
+		services.AddTransient<DictationViewModel>().AddTransient<DictationPage>();
 
 		Routing.RegisterRoute(Routes.ClientEdit, typeof(ClientEditPage));
 		Routing.RegisterRoute(Routes.ClientPicker, typeof(ClientPickerPage));
@@ -71,6 +73,7 @@ public static class MauiProgram
 		Routing.RegisterRoute(Routes.CatalogItemEdit, typeof(CatalogItemEditPage));
 		Routing.RegisterRoute(Routes.Terms, typeof(TermsPage));
 		Routing.RegisterRoute(Routes.Signature, typeof(SignaturePage));
+		Routing.RegisterRoute(Routes.Dictation, typeof(DictationPage));
 
 #if DEBUG
 		builder.Logging.AddDebug();

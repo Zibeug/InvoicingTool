@@ -67,3 +67,36 @@ public sealed class FakeImagePicker : IImagePickerService
 
     public Task<byte[]?> PickLogoAsync() => Task.FromResult(Image);
 }
+
+public sealed class FakeSpeech : ISpeechRecognizer
+{
+    public string? StartError { get; set; }
+    public string? LastCulture { get; private set; }
+    public bool IsListening { get; private set; }
+
+    public event EventHandler<string>? TextUpdated;
+    public event EventHandler<string?>? Completed;
+
+    public Task<string?> StartAsync(string culture)
+    {
+        LastCulture = culture;
+        IsListening = StartError is null;
+        return Task.FromResult(StartError);
+    }
+
+    public Task StopAsync()
+    {
+        IsListening = false;
+        return Task.CompletedTask;
+    }
+
+    /// <summary>Simule l'utilisateur qui parle : résultats partiels puis texte final.</summary>
+    public void Say(string text)
+    {
+        var words = text.Split(' ');
+        for (var i = 1; i <= words.Length; i++)
+            TextUpdated?.Invoke(this, string.Join(' ', words.Take(i)));
+        IsListening = false;
+        Completed?.Invoke(this, text);
+    }
+}

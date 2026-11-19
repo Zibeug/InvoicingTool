@@ -13,6 +13,9 @@ public sealed record CountryProfile
     /// <summary>Culture utilisée pour formater les nombres et les dates sur les documents.</summary>
     public required string CultureName { get; init; }
 
+    /// <summary>Langue de la reconnaissance vocale (dictée).</summary>
+    public string SpeechCulture { get; init; } = "fr-FR";
+
     public required string DefaultCurrency { get; init; }
 
     /// <summary>Symbole de la devise avant le montant (« CHF 1'250.00 ») plutôt qu'après (« 1 250,00 € »).</summary>
@@ -69,6 +72,7 @@ public static class CountryProfiles
     public static readonly CountryProfile Switzerland = new()
     {
         Code = "CH",
+        SpeechCulture = "fr-CH",
         Name = "Suisse",
         CultureName = "de-CH", // séparateur de milliers « ' » et point décimal, usage courant dans toute la Suisse
         DefaultCurrency = "CHF",
@@ -88,6 +92,7 @@ public static class CountryProfiles
     public static readonly CountryProfile Belgium = new()
     {
         Code = "BE",
+        SpeechCulture = "fr-BE",
         Name = "Belgique",
         CultureName = "fr-BE",
         DefaultCurrency = "EUR",
@@ -107,6 +112,7 @@ public static class CountryProfiles
     public static readonly CountryProfile Luxembourg = new()
     {
         Code = "LU",
+        SpeechCulture = "fr-LU",
         Name = "Luxembourg",
         CultureName = "fr-LU",
         DefaultCurrency = "EUR",

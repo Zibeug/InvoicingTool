@@ -224,6 +224,16 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
         RefreshState();
     });
 
+    /// <summary>Dicter des lignes à voix haute. Le brouillon est d'abord enregistré pour ne rien perdre.</summary>
+    [RelayCommand]
+    private Task DictateAsync() => RunAsync(async () =>
+    {
+        if (!await SaveDraftAsync())
+            return;
+        await _navigation.GoToAsync(Routes.Dictation,
+            new Dictionary<string, object> { [Routes.IdParameter] = _document.Id });
+    });
+
     /// <summary>Le client signe le devis au doigt, directement sur l'écran.</summary>
     [RelayCommand]
     private Task SignAsync() => _navigation.GoToAsync(Routes.Signature,

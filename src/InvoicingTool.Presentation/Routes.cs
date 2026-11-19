@@ -17,6 +17,7 @@ public static class Routes
     public const string CatalogItemEdit = "catalog-item";
     public const string Terms = "terms";
     public const string Signature = "signature";
+    public const string Dictation = "dictation";
 
     // Paramètres
     public const string IdParameter = "id";

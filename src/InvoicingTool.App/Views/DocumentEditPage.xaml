@@ -96,6 +96,7 @@
                 <Button Text="+ Ligne" Command="{Binding AddLineCommand}" Style="{StaticResource OutlineButton}" />
                 <Button Grid.Column="1" Text="+ Article" Command="{Binding AddFromCatalogCommand}" Style="{StaticResource OutlineButton}" />
             </Grid>
+            <Button Text="Dicter des lignes" Command="{Binding DictateCommand}" IsVisible="{Binding IsEditable}" />
 
             <!-- Totaux : sans TVA, seul le total s'affiche -->
             <Border Style="{StaticResource Card}" Margin="0,12,0,0">

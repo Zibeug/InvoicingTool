@@ -14,6 +14,11 @@ Tout fonctionne **hors ligne** : les données sont stockées dans une base **SQL
   - brouillon modifiable puis **émission** avec un numéro définitif continu par année (`D-2026-0001`, `F-2026-0001`) ;
     un document émis n'est plus modifiable (une facture s'annule, elle ne se supprime pas) ;
   - statuts (envoyé, accepté, refusé, à payer, payée, annulée), **devis → facture** en un geste, duplication ;
+  - **dictée** : bouton « Dicter des lignes », on parle naturellement
+    (« 3 heures de conseil à 120 francs, puis un forfait déplacement à 50 francs ») et les lignes sont créées :
+    quantité, unité, désignation, prix unitaire ou total, nombres en chiffres ou en lettres (y compris septante,
+    huitante, nonante), articles du catalogue reconnus avec leur prix. Le texte reste modifiable avant l'ajout.
+    Reconnaissance vocale du téléphone, hors ligne quand le téléphone le permet ;
   - **signature du devis au doigt** sur l'écran du téléphone : la signature, le nom du signataire, la date et l'heure
     sont imprimés dans le cadre « Bon pour accord » et le devis passe en « accepté » ;
   - **numéro de départ** au choix (ex. continuer à `F-2026-0250` après un ancien logiciel), sans risque de doublon ;
@@ -54,11 +59,12 @@ src/
                                CompanySettings, CountryProfile (règles par pays), Currency, TermsOfUse (CGU)
     Data/                      AppDatabase + dépôts (suppression logique)
     Services/                  DocumentCalculator, DocumentService (cycle de vie, numérotation), MoneyFormatter,
-                               PrintableDocument + HtmlDocumentRenderer, BackupService (export / restauration)
+                               PrintableDocument + HtmlDocumentRenderer, BackupService (export / restauration),
+                               DictationParser (phrase dictée → lignes)
     Pdf/                       PdfDocumentRenderer (PDFsharp/MigraDoc, licence MIT, 100 % .NET) + polices OpenSans
   InvoicingTool.Presentation/  ViewModels MVVM (CommunityToolkit.Mvvm) — net10.0, testables sans téléphone
   InvoicingTool.App/           Application .NET MAUI : pages XAML, navigation Shell, services natifs,
-                               signature avec DrawingView (CommunityToolkit.Maui)
+                               signature (DrawingView) et dictée (OfflineSpeechToText) avec CommunityToolkit.Maui
 tests/
   InvoicingTool.Tests/         Tests xUnit du cœur métier et des ViewModels
 ```
