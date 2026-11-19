@@ -21,7 +21,7 @@ public static class DocumentCalculator
         increment <= 0.01m ? Round(value) : Math.Round(value / increment, MidpointRounding.AwayFromZero) * increment;
 
     public static decimal LineTotalExclTax(DocumentLine line) =>
-        Round(line.Quantity * line.UnitPrice * (1m - line.DiscountPercent / 100m));
+        Round(line.Quantity * line.UnitPrice);
 
     /// <summary>Totaux selon les règles fiscales enregistrées sur le document.</summary>
     public static DocumentTotals Compute(CommercialDocument document, IEnumerable<DocumentLine> lines) =>

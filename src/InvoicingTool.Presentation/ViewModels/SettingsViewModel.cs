@@ -2,20 +2,37 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using InvoicingTool.Core.Data;
 using InvoicingTool.Core.Models;
+using InvoicingTool.Core.Services;
 using InvoicingTool.Presentation.Abstractions;
 
 namespace InvoicingTool.Presentation.ViewModels;
 
-/// <summary>Informations de l'entreprise, pays (règles de TVA), devise et préférences de facturation.</summary>
+/// <summary>Informations de l'entreprise, pays et devise, TVA, sauvegarde des données et conditions d'utilisation.</summary>
 public partial class SettingsViewModel : ViewModelBase
 {
+    public const string BackupContentType = "application/json";
+
     private readonly SettingsRepository _settings;
+    private readonly BackupService _backup;
+    private readonly IShareService _share;
+    private readonly IFilePickerService _filePicker;
+    private readonly INavigationService _navigation;
     private CompanySettings _company = new();
     private bool _loading;
 
-    public SettingsViewModel(SettingsRepository settings, IDialogService dialogs) : base(dialogs)
+    public SettingsViewModel(
+        SettingsRepository settings,
+        BackupService backup,
+        IShareService share,
+        IFilePickerService filePicker,
+        INavigationService navigation,
+        IDialogService dialogs) : base(dialogs)
     {
         _settings = settings;
+        _backup = backup;
+        _share = share;
+        _filePicker = filePicker;
+        _navigation = navigation;
         Title = "Mon entreprise";
     }
 
@@ -23,7 +40,7 @@ public partial class SettingsViewModel : ViewModelBase
     public IReadOnlyList<Currency> CurrencyList => Currencies.All;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CompanyIdLabel), nameof(VatNumberLabel), nameof(InsuranceLabel), nameof(TaxRateHint),
+    [NotifyPropertyChangedFor(nameof(CompanyIdLabel), nameof(VatNumberLabel), nameof(TaxRateHint),
         nameof(CompanyIdExample), nameof(VatNumberExample))]
     private CountryProfile _selectedCountry = CountryProfiles.France;
 
@@ -36,11 +53,17 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] private string? _city;
     [ObservableProperty] private string? _phone;
     [ObservableProperty] private string? _email;
-    [ObservableProperty] private string? _siret;
+    [ObservableProperty] private string? _companyId;
     [ObservableProperty] private string? _vatNumber;
-    [ObservableProperty] private string? _insuranceInfo;
     [ObservableProperty] private string? _iban;
-    [ObservableProperty] private bool _vatExempt;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsVatRegistered))]
+    private bool _vatExempt;
+
+    [ObservableProperty] private string _lastBackupDisplay = "Jamais";
+    [ObservableProperty] private string _termsAcceptedDisplay = string.Empty;
+
+    public bool IsVatRegistered => !VatExempt;
     [ObservableProperty] private string? _vatExemptionMention;
     [ObservableProperty] private string _taxRatesText = string.Empty;
     [ObservableProperty] private string _defaultVatRateText = "10";
@@ -53,7 +76,6 @@ public partial class SettingsViewModel : ViewModelBase
 
     public string CompanyIdLabel => SelectedCountry.CompanyIdLabel;
     public string VatNumberLabel => SelectedCountry.VatNumberLabel;
-    public string InsuranceLabel => SelectedCountry.InsuranceLabel;
     public string? TaxRateHint => SelectedCountry.TaxRateHint;
     public string? CompanyIdExample => SelectedCountry.CompanyIdExample;
     public string? VatNumberExample => SelectedCountry.VatNumberExample;
@@ -73,9 +95,8 @@ public partial class SettingsViewModel : ViewModelBase
             City = _company.City;
             Phone = _company.Phone;
             Email = _company.Email;
-            Siret = _company.Siret;
+            CompanyId = _company.CompanyId;
             VatNumber = _company.VatNumber;
-            InsuranceInfo = _company.InsuranceInfo;
             Iban = _company.Iban;
             VatExempt = _company.VatExempt;
             VatExemptionMention = _company.VatExemptionMention;
@@ -87,11 +108,22 @@ public partial class SettingsViewModel : ViewModelBase
             QuotePrefix = _company.QuotePrefix;
             InvoicePrefix = _company.InvoicePrefix;
             PaymentTerms = _company.PaymentTerms;
+            LastBackupDisplay = _company.LastBackupAt is { } last ? last.ToLocalTime().ToString("dd.MM.yyyy HH:mm") : "Jamais";
+            TermsAcceptedDisplay = _company.TermsAcceptedAt is { } accepted
+                ? $"Acceptées le {accepted.ToLocalTime():dd.MM.yyyy} (version {_company.TermsAcceptedVersion})"
+                : "Non acceptées";
         }
         finally
         {
             _loading = false;
         }
+    }
+
+    partial void OnVatExemptChanged(bool value)
+    {
+        // Propose la mention légale du pays quand l'entreprise devient non assujettie.
+        if (!_loading && value && string.IsNullOrWhiteSpace(VatExemptionMention))
+            VatExemptionMention = SelectedCountry.TaxExemptionMention;
     }
 
     partial void OnSelectedCountryChanged(CountryProfile value)
@@ -142,6 +174,9 @@ public partial class SettingsViewModel : ViewModelBase
             return;
         }
 
+        // Repart des réglages enregistrés : la date de sauvegarde ou l'acceptation des CGU
+        // ont pu changer depuis l'ouverture de l'écran.
+        _company = await _settings.GetSettingsAsync();
         _company.CountryCode = SelectedCountry.Code;
         _company.CurrencyCode = SelectedCurrency.Code;
         _company.CompanyName = CompanyName.Trim();
@@ -151,9 +186,8 @@ public partial class SettingsViewModel : ViewModelBase
         _company.City = City;
         _company.Phone = Phone;
         _company.Email = Email;
-        _company.Siret = Siret;
+        _company.CompanyId = CompanyId;
         _company.VatNumber = VatNumber;
-        _company.InsuranceInfo = InsuranceInfo;
         _company.Iban = Iban;
         _company.VatExempt = VatExempt;
         _company.VatExemptionMention = VatExemptionMention;
@@ -168,6 +202,41 @@ public partial class SettingsViewModel : ViewModelBase
         await _settings.SaveAsync(_company);
         await Dialogs.AlertAsync("Paramètres", "Informations enregistrées.");
     });
+
+    /// <summary>Exporte toutes les données dans un fichier à envoyer ou enregistrer hors du téléphone (Drive, e-mail…).</summary>
+    [RelayCommand]
+    private Task ExportBackupAsync() => RunAsync(async () =>
+    {
+        var content = await _backup.ExportAsync();
+        await _share.ShareFileAsync(_backup.SuggestedFileName(), content, BackupContentType, "Sauvegarde des données");
+        LastBackupDisplay = DateTime.Now.ToString("dd.MM.yyyy HH:mm");
+    });
+
+    /// <summary>Remplace les données du téléphone par celles d'un fichier de sauvegarde.</summary>
+    [RelayCommand]
+    private Task RestoreBackupAsync() => RunAsync(async () =>
+    {
+        await using var stream = await _filePicker.PickBackupFileAsync();
+        if (stream is null)
+            return;
+
+        var backup = BackupService.Read(stream);
+        var summary = BackupService.Summarize(backup);
+        var confirmed = await Dialogs.ConfirmAsync("Restaurer la sauvegarde",
+            $"Sauvegarde du {summary.ExportedAt.ToLocalTime():dd.MM.yyyy HH:mm} : {summary.Clients} client(s), " +
+            $"{summary.Documents} devis et facture(s), {summary.CatalogItems} article(s).\n\n" +
+            "Toutes les données actuelles du téléphone seront remplacées. Pensez à les exporter d'abord si besoin.",
+            "Remplacer", "Annuler");
+        if (!confirmed)
+            return;
+
+        await _backup.RestoreAsync(backup);
+        await OnAppearingAsync();
+        await Dialogs.AlertAsync("Restaurer la sauvegarde", "Les données ont été restaurées.");
+    });
+
+    [RelayCommand]
+    private Task ShowTermsAsync() => _navigation.GoToAsync(Routes.Terms);
 
     private static string FormatRates(IEnumerable<decimal> rates) => string.Join(" ; ", rates.Select(DecimalParser.Format));
 }

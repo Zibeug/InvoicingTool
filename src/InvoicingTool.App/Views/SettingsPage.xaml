@@ -14,27 +14,33 @@
 
     <ScrollView>
         <VerticalStackLayout Padding="16" Spacing="6">
-            <Label Text="Ces informations apparaissent sur vos devis et factures." Style="{StaticResource Secondary}" />
 
-            <Label Text="Pays et devise" Style="{StaticResource SectionTitle}" />
-            <Label Text="Pays (règles de TVA et mentions légales)" Style="{StaticResource FieldLabel}" />
-            <Picker ItemsSource="{Binding Countries}" ItemDisplayBinding="{Binding Name, x:DataType=model:CountryProfile}"
-                    SelectedItem="{Binding SelectedCountry}" />
-            <Label Text="Devise des nouveaux documents" Style="{StaticResource FieldLabel}" />
-            <Picker ItemsSource="{Binding CurrencyList}" ItemDisplayBinding="{Binding DisplayName, x:DataType=model:Currency}"
-                    SelectedItem="{Binding SelectedCurrency}" />
+            <!-- Sauvegarde en premier : les données ne sont que sur ce téléphone -->
+            <Border Style="{StaticResource Card}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Sauvegarde des données" FontFamily="OpenSansSemibold" FontSize="16" />
+                    <Label Text="Vos données sont enregistrées uniquement sur ce téléphone. Exportez régulièrement une sauvegarde et gardez-la ailleurs (e-mail, Drive, iCloud, ordinateur)."
+                           Style="{StaticResource Secondary}" />
+                    <Label Text="{Binding LastBackupDisplay, StringFormat='Dernière sauvegarde : {0}'}" FontSize="13" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <Button Text="Exporter" Command="{Binding ExportBackupCommand}" />
+                        <Button Grid.Column="1" Text="Restaurer" Command="{Binding RestoreBackupCommand}" Style="{StaticResource OutlineButton}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
 
             <Label Text="Entreprise" Style="{StaticResource SectionTitle}" />
+            <Label Text="Ces informations apparaissent sur vos devis et factures." Style="{StaticResource Secondary}" />
             <Label Text="Nom de l'entreprise" Style="{StaticResource FieldLabel}" />
             <Entry Text="{Binding CompanyName}" />
-            <Label Text="Nom du dirigeant" Style="{StaticResource FieldLabel}" />
+            <Label Text="Nom du dirigeant (facultatif)" Style="{StaticResource FieldLabel}" />
             <Entry Text="{Binding OwnerName}" />
             <Label Text="Adresse" Style="{StaticResource FieldLabel}" />
             <Entry Text="{Binding Address}" />
             <Grid ColumnDefinitions="2*,3*" ColumnSpacing="8">
                 <VerticalStackLayout>
                     <Label Text="Code postal" Style="{StaticResource FieldLabel}" />
-                    <Entry Text="{Binding PostalCode}" Keyboard="Numeric" />
+                    <Entry Text="{Binding PostalCode}" />
                 </VerticalStackLayout>
                 <VerticalStackLayout Grid.Column="1">
                     <Label Text="Ville" Style="{StaticResource FieldLabel}" />
@@ -46,22 +52,34 @@
             <Label Text="E-mail" Style="{StaticResource FieldLabel}" />
             <Entry Text="{Binding Email}" Keyboard="Email" />
             <Label Text="{Binding CompanyIdLabel}" Style="{StaticResource FieldLabel}" />
-            <Entry Text="{Binding Siret}" Placeholder="{Binding CompanyIdExample}" />
-            <Label Text="{Binding InsuranceLabel, StringFormat='{0} (assureur, n° de contrat, zone couverte)'}" Style="{StaticResource FieldLabel}" />
-            <Editor Text="{Binding InsuranceInfo}" AutoSize="TextChanges" />
-            <Label Text="IBAN" Style="{StaticResource FieldLabel}" />
+            <Entry Text="{Binding CompanyId}" Placeholder="{Binding CompanyIdExample}" />
+            <Label Text="IBAN (imprimé sur les factures)" Style="{StaticResource FieldLabel}" />
             <Entry Text="{Binding Iban}" />
+
+            <Label Text="Pays et devise" Style="{StaticResource SectionTitle}" />
+            <Label Text="Pays" Style="{StaticResource FieldLabel}" />
+            <Picker ItemsSource="{Binding Countries}" ItemDisplayBinding="{Binding Name, x:DataType=model:CountryProfile}"
+                    SelectedItem="{Binding SelectedCountry}" />
+            <Label Text="Devise" Style="{StaticResource FieldLabel}" />
+            <Picker ItemsSource="{Binding CurrencyList}" ItemDisplayBinding="{Binding DisplayName, x:DataType=model:Currency}"
+                    SelectedItem="{Binding SelectedCurrency}" />
+            <Grid ColumnDefinitions="*,Auto">
+                <Label Text="Arrondir les totaux à 0,05" VerticalOptions="Center" />
+                <Switch Grid.Column="1" IsToggled="{Binding RoundToFiveCents}" />
+            </Grid>
 
             <Label Text="TVA" Style="{StaticResource SectionTitle}" />
             <Grid ColumnDefinitions="*,Auto">
-                <Label Text="Non assujetti à la TVA (franchise, petite entreprise)" VerticalOptions="Center" />
+                <Label Text="Mon entreprise n'est pas assujettie à la TVA" VerticalOptions="Center" />
                 <Switch Grid.Column="1" IsToggled="{Binding VatExempt}" />
             </Grid>
+            <!-- Non assujetti : la TVA disparaît de toute l'application, seule une mention légale reste possible -->
             <VerticalStackLayout IsVisible="{Binding VatExempt}" Spacing="6">
-                <Label Text="Mention imprimée sur les documents" Style="{StaticResource FieldLabel}" />
+                <Label Text="La TVA est masquée partout : les prix et les totaux sont des montants nets." Style="{StaticResource Secondary}" />
+                <Label Text="Mention imprimée sur les documents (laisser vide si aucune)" Style="{StaticResource FieldLabel}" />
                 <Entry Text="{Binding VatExemptionMention}" />
             </VerticalStackLayout>
-            <VerticalStackLayout IsVisible="{Binding VatExempt, Converter={StaticResource Not}}" Spacing="6">
+            <VerticalStackLayout IsVisible="{Binding IsVatRegistered}" Spacing="6">
                 <Label Text="{Binding VatNumberLabel}" Style="{StaticResource FieldLabel}" />
                 <Entry Text="{Binding VatNumber}" Placeholder="{Binding VatNumberExample}" />
                 <Label Text="Taux de TVA proposés (%) — séparés par « ; »" Style="{StaticResource FieldLabel}" />
@@ -70,15 +88,11 @@
                 <Label Text="Taux par défaut des nouvelles lignes (%)" Style="{StaticResource FieldLabel}" />
                 <Entry Text="{Binding DefaultVatRateText}" Keyboard="Numeric" />
             </VerticalStackLayout>
-            <Grid ColumnDefinitions="*,Auto">
-                <Label Text="Arrondir le total à 0,05 (usage suisse)" VerticalOptions="Center" />
-                <Switch Grid.Column="1" IsToggled="{Binding RoundToFiveCents}" />
-            </Grid>
 
             <Label Text="Devis et factures" Style="{StaticResource SectionTitle}" />
             <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                 <VerticalStackLayout>
-                    <Label Text="Validité devis (jours)" Style="{StaticResource FieldLabel}" />
+                    <Label Text="Validité des devis (jours)" Style="{StaticResource FieldLabel}" />
                     <Entry Text="{Binding QuoteValidityDaysText}" Keyboard="Numeric" />
                 </VerticalStackLayout>
                 <VerticalStackLayout Grid.Column="1">
@@ -96,10 +110,15 @@
                     <Entry Text="{Binding InvoicePrefix}" />
                 </VerticalStackLayout>
             </Grid>
-            <Label Text="Conditions de paiement (mentions légales en bas de facture)" Style="{StaticResource FieldLabel}" />
+            <Label Text="Conditions de paiement (bas des factures)" Style="{StaticResource FieldLabel}" />
             <Editor Text="{Binding PaymentTerms}" AutoSize="TextChanges" />
 
-            <Button Text="Enregistrer" Command="{Binding SaveCommand}" Margin="0,12,0,24" />
+            <Button Text="Enregistrer" Command="{Binding SaveCommand}" Margin="0,12,0,0" />
+
+            <Label Text="Conditions d'utilisation" Style="{StaticResource SectionTitle}" />
+            <Label Text="{Binding TermsAcceptedDisplay}" Style="{StaticResource Secondary}" />
+            <Button Text="Lire les conditions d'utilisation" Command="{Binding ShowTermsCommand}"
+                    Style="{StaticResource OutlineButton}" Margin="0,0,0,24" />
         </VerticalStackLayout>
     </ScrollView>
 </views:BasePage>

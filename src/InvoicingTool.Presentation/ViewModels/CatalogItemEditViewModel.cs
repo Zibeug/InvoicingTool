@@ -24,20 +24,21 @@ public partial class CatalogItemEditViewModel : ViewModelBase, IParameterReceive
         _catalog = catalog;
         _settings = settings;
         _navigation = navigation;
-        Title = "Nouvelle prestation";
+        Title = "Nouvel article";
     }
 
     [ObservableProperty] private string _label = string.Empty;
     [ObservableProperty] private string? _description;
-    [ObservableProperty] private string _unit = "m²";
+    [ObservableProperty] private string _unit = "u";
     [ObservableProperty] private string _unitPriceText = "0";
     [ObservableProperty] private string _vatRateText = "10";
     [ObservableProperty] private bool _isExisting;
     [ObservableProperty] private string _priceLabel = "Prix unitaire HT";
     [ObservableProperty] private string? _taxRateHint;
+    [ObservableProperty] private bool _showVat = true;
 
     /// <summary>Unités proposées ; la saisie libre reste possible.</summary>
-    public IReadOnlyList<string> CommonUnits { get; } = ["m²", "ml", "h", "j", "u", "forfait", "L", "kg"];
+    public IReadOnlyList<string> CommonUnits { get; } = ["u", "pièce", "h", "jour", "mois", "forfait", "km", "kg", "m²"];
 
     public void ApplyParameters(IDictionary<string, object> parameters)
     {
@@ -47,8 +48,9 @@ public partial class CatalogItemEditViewModel : ViewModelBase, IParameterReceive
     public override async Task OnAppearingAsync()
     {
         var company = await _settings.GetSettingsAsync();
-        PriceLabel = $"Prix unitaire HT ({MoneyFormatter.For(company).CurrencySymbol})";
-        TaxRateHint = company.VatExempt ? null : company.Country.TaxRateHint;
+        ShowVat = !company.VatExempt;
+        PriceLabel = $"{(ShowVat ? "Prix unitaire HT" : "Prix unitaire")} ({MoneyFormatter.For(company).CurrencySymbol})";
+        TaxRateHint = ShowVat ? company.Country.TaxRateHint : null;
 
         if (_itemId is not { } id)
         {
@@ -71,12 +73,12 @@ public partial class CatalogItemEditViewModel : ViewModelBase, IParameterReceive
     {
         if (string.IsNullOrWhiteSpace(Label))
         {
-            await Dialogs.AlertAsync("Prestation", "Le libellé est obligatoire.");
+            await Dialogs.AlertAsync("Article", "Le libellé est obligatoire.");
             return;
         }
         if (!DecimalParser.TryParse(UnitPriceText, out var price) || !DecimalParser.TryParse(VatRateText, out var vat))
         {
-            await Dialogs.AlertAsync("Prestation", "Prix ou taux de TVA invalide.");
+            await Dialogs.AlertAsync("Article", ShowVat ? "Prix ou taux de TVA invalide." : "Prix invalide.");
             return;
         }
 
@@ -84,7 +86,7 @@ public partial class CatalogItemEditViewModel : ViewModelBase, IParameterReceive
         _item.Description = Description;
         _item.Unit = string.IsNullOrWhiteSpace(Unit) ? "u" : Unit.Trim();
         _item.UnitPrice = price;
-        _item.VatRate = vat;
+        _item.VatRate = ShowVat ? vat : 0m;
         await _catalog.SaveAsync(_item);
         await _navigation.GoBackAsync();
     });

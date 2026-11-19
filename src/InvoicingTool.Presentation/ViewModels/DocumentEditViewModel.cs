@@ -42,11 +42,9 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
     public ObservableCollection<LineItemViewModel> Lines { get; } = [];
 
     [ObservableProperty] private string? _subject;
-    [ObservableProperty] private string? _siteAddress;
     [ObservableProperty] private DateTime _issueDate = DateTime.Today;
     [ObservableProperty] private DateTime _dueDate = DateTime.Today;
     [ObservableProperty] private string? _notes;
-    [ObservableProperty] private string _depositText = "0";
 
     [ObservableProperty] private string _clientName = string.Empty;
     [ObservableProperty] private string _number = string.Empty;
@@ -62,11 +60,12 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
     [ObservableProperty] private string _totalInclTaxDisplay = string.Empty;
     [ObservableProperty] private string _roundingDisplay = string.Empty;
     [ObservableProperty] private bool _hasRounding;
-    [ObservableProperty] private string _amountDueDisplay = string.Empty;
 
     [ObservableProperty] private string _taxName = "TVA";
     [ObservableProperty] private string? _taxRateHint;
-    [ObservableProperty] private string _depositLabel = "Acompte versé";
+    [ObservableProperty] private string _unitPriceLabel = "PU HT";
+    [ObservableProperty] private string _lineTotalLabel = "Total HT";
+    [ObservableProperty] private string _grandTotalLabel = "Total TTC";
 
     public string DueDateLabel => IsQuote ? "Valable jusqu'au" : "Échéance";
 
@@ -92,11 +91,9 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
         _money = MoneyFormatter.For(document);
 
         Subject = document.Title;
-        SiteAddress = document.SiteAddress;
         IssueDate = document.IssueDate;
         DueDate = document.DueDate ?? document.IssueDate;
         Notes = document.Notes;
-        DepositText = DecimalParser.Format(document.DepositAmount);
 
         foreach (var line in Lines)
             line.AmountChanged -= OnLineAmountChanged;
@@ -110,12 +107,10 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
 
     public override async Task OnDisappearingAsync()
     {
-        // Sauvegarde automatique : rien n'est perdu si l'artisan quitte la page ou est interrompu.
+        // Sauvegarde automatique : rien n'est perdu si l'utilisateur quitte la page ou est interrompu.
         if (_loaded && !_deleted && _document.IsEditable)
             await SaveDraftAsync();
     }
-
-    partial void OnDepositTextChanged(string value) => RefreshTotals();
 
     [RelayCommand]
     private void AddLine()
@@ -137,12 +132,12 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
         var items = await _catalog.GetSortedAsync();
         if (items.Count == 0)
         {
-            await Dialogs.AlertAsync("Prestations", "Aucune prestation enregistrée. Ajoutez-en dans l'onglet « Prestations ».");
+            await Dialogs.AlertAsync("Articles", "Aucun article enregistré. Ajoutez-en dans l'onglet « Articles ».");
             return;
         }
 
         var labels = items.Select(i => $"{i.Label} — {_money.Format(i.UnitPrice)}/{i.Unit}").ToList();
-        var choice = await Dialogs.ChooseAsync("Ajouter une prestation", labels);
+        var choice = await Dialogs.ChooseAsync("Ajouter un article", labels);
         var index = choice is null ? -1 : labels.IndexOf(choice);
         if (index < 0)
             return;
@@ -168,16 +163,6 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
         line.AmountChanged -= OnLineAmountChanged;
         Lines.Remove(line);
         RefreshTotals();
-    }
-
-    [RelayCommand]
-    private void MoveLineUp(LineItemViewModel? line)
-    {
-        if (line is null || !IsEditable)
-            return;
-        var index = Lines.IndexOf(line);
-        if (index > 0)
-            Lines.Move(index, index - 1);
     }
 
     [RelayCommand]
@@ -262,9 +247,9 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
         if (!_document.IsEditable)
             return true;
 
-        if (Lines.Any(l => l.HasErrors) || !DecimalParser.TryParse(DepositText, out var deposit))
+        if (Lines.Any(l => l.HasErrors))
         {
-            await Dialogs.AlertAsync("Saisie invalide", "Vérifiez les quantités, prix et taux saisis.");
+            await Dialogs.AlertAsync("Saisie invalide", "Vérifiez les quantités et les prix saisis.");
             return false;
         }
         if (DueDate < IssueDate)
@@ -274,11 +259,9 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
         }
 
         _document.Title = Subject;
-        _document.SiteAddress = SiteAddress;
         _document.IssueDate = IssueDate.Date;
         _document.DueDate = DueDate.Date;
         _document.Notes = Notes;
-        _document.DepositAmount = deposit;
 
         var lines = Lines
             .Where(l => !string.IsNullOrWhiteSpace(l.Line.Description) || l.Line.UnitPrice != 0)
@@ -311,7 +294,10 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
         ShowVat = !_document.VatExempt;
         TaxName = profile.TaxName;
         TaxRateHint = ShowVat && IsEditable ? profile.TaxRateHint : null;
-        DepositLabel = $"Acompte versé ({_money.CurrencySymbol})";
+        // Entreprise non assujettie : aucun libellé ne parle de TVA, de HT ou de TTC.
+        UnitPriceLabel = ShowVat ? "PU HT" : "Prix unitaire";
+        LineTotalLabel = ShowVat ? "Total HT" : "Montant";
+        GrandTotalLabel = ShowVat ? "Total TTC" : "Total";
         IssueDate = _document.IssueDate;
         DueDate = _document.DueDate ?? _document.IssueDate;
         OnPropertyChanged(nameof(DueDateLabel));
@@ -326,6 +312,6 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
         TotalInclTaxDisplay = _money.Format(totals.TotalInclTax);
         HasRounding = totals.RoundingAdjustment != 0;
         RoundingDisplay = _money.Format(totals.RoundingAdjustment);
-        AmountDueDisplay = _money.Format(totals.TotalInclTax - DecimalParser.ParseOrZero(DepositText));
+
     }
 }

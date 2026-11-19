@@ -47,7 +47,7 @@ public class CountryAndPdfTests
 
     private static async Task<(CommercialDocument Doc, CompanySettings Company)> IssueSwissInvoiceAsync(TestDatabase t)
     {
-        var company = new CompanySettings { CompanyName = "Peinture Favre Sàrl", Siret = "CHE-123.456.789", VatNumber = "CHE-123.456.789 TVA" };
+        var company = new CompanySettings { CompanyName = "Peinture Favre Sàrl", CompanyId = "CHE-123.456.789", VatNumber = "CHE-123.456.789 TVA" };
         company.ApplyCountryDefaults(CountryProfiles.Switzerland);
         await t.Settings.SaveAsync(company);
 
@@ -111,6 +111,54 @@ public class CountryAndPdfTests
         Assert.Equal("TVA non applicable, art. 293 B du CGI.", printable.TaxExemptionMention);
         Assert.Equal(300m, quote.TotalInclTax);
         Assert.DoesNotContain(printable.Totals, r => r.Label.StartsWith("TVA"));
+
+        // Aucun libellé HT / TTC / TVA, ni à l'écran ni dans le PDF ; seule la mention légale reste.
+        Assert.Equal("Prix unitaire", printable.UnitPriceHeader);
+        Assert.Equal("Montant", printable.TotalHeader);
+        var total = Assert.Single(printable.Totals);
+        Assert.Equal("Total", total.Label);
+        var html = HtmlDocumentRenderer.Render(printable);
+        Assert.DoesNotContain("HT", html);
+        Assert.DoesNotContain("TTC", html);
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(html, "TVA"));
+    }
+
+    [Fact]
+    public async Task Vat_exempt_mention_can_be_left_empty()
+    {
+        await using var t = new TestDatabase();
+        var company = new CompanySettings { VatExempt = true, VatExemptionMention = "" };
+        await t.Settings.SaveAsync(company);
+        var client = new Client { Name = "M. Petit" };
+        await t.Clients.SaveAsync(client);
+        var quote = await t.Service.CreateDraftAsync(DocumentType.Quote, client);
+
+        var printable = PrintableDocument.Build(quote, [], company);
+
+        Assert.Null(printable.TaxExemptionMention);
+    }
+
+    [Fact]
+    public async Task Vat_exempt_editor_hides_vat_and_ht_labels()
+    {
+        await using var t = new TestDatabase();
+        await t.Settings.SaveAsync(new CompanySettings { VatExempt = true });
+        var client = new Client { Name = "M. Petit" };
+        await t.Clients.SaveAsync(client);
+        var doc = await t.Service.CreateDraftAsync(DocumentType.Invoice, client);
+        var vm = new DocumentEditViewModel(t.Documents, t.Service, t.Settings, t.Catalog, new FakeNavigation(), new FakeDialogs());
+        vm.ApplyParameters(new Dictionary<string, object> { [Presentation.Routes.IdParameter] = doc.Id });
+        await vm.OnAppearingAsync();
+
+        vm.AddLineCommand.Execute(null);
+        vm.Lines[0].UnitPriceText = "80";
+
+        Assert.False(vm.ShowVat);
+        Assert.Equal("0", vm.Lines[0].VatRateText);
+        Assert.Equal("Prix unitaire", vm.UnitPriceLabel);
+        Assert.Equal("Montant", vm.LineTotalLabel);
+        Assert.Equal("Total", vm.GrandTotalLabel);
+        Assert.Equal("80,00\u00a0€", vm.TotalInclTaxDisplay);
     }
 
     [Fact]
@@ -151,7 +199,7 @@ public class CountryAndPdfTests
     {
         await using var t = new TestDatabase();
         var dialogs = new FakeDialogs { ConfirmResult = true };
-        var vm = new SettingsViewModel(t.Settings, dialogs);
+        var vm = new SettingsViewModel(t.Settings, new BackupService(t.Database, t.Settings, t.Clock), new FakeShare(), new FakeFilePicker(), new FakeNavigation(), dialogs);
         await vm.OnAppearingAsync();
 
         await vm.ProposeCountryDefaultsAsync(CountryProfiles.Switzerland);

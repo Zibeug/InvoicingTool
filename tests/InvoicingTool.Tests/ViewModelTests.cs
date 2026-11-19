@@ -43,18 +43,18 @@ public class ViewModelTests
 
         vm.AddLineCommand.Execute(null);
         var line = vm.Lines.Single();
-        line.Description = "Peinture plafond";
+        line.Description = "Séance de coaching";
         line.QuantityText = "20,5";
         line.UnitPriceText = "18";
 
         Assert.Equal("369,00\u00a0€", line.TotalDisplay);
         Assert.Equal("369,00\u00a0€", vm.TotalExclTaxDisplay);
-        Assert.Equal("405,90\u00a0€", vm.TotalInclTaxDisplay); // TVA 10 % par défaut
+        Assert.Equal("442,80\u00a0€", vm.TotalInclTaxDisplay); // TVA 20 % par défaut
 
         await vm.OnDisappearingAsync();
 
         var saved = await t.Documents.GetAsync(doc.Id);
-        Assert.Equal(405.90m, saved!.TotalInclTax);
+        Assert.Equal(442.80m, saved!.TotalInclTax);
         Assert.Equal(20.5m, Assert.Single(await t.Service.GetLinesAsync(doc.Id)).Quantity);
     }
 
@@ -96,7 +96,7 @@ public class ViewModelTests
         await using var t = new TestDatabase();
         var (vm, _, _, _) = await OpenNewQuoteAsync(t);
         vm.AddLineCommand.Execute(null);
-        vm.Lines[0].Description = "Peinture façade";
+        vm.Lines[0].Description = "Création du logo";
         vm.Lines[0].UnitPriceText = "1500";
 
         await vm.IssueCommand.ExecuteAsync(null);
@@ -113,7 +113,7 @@ public class ViewModelTests
         await using var t = new TestDatabase();
         var (vm, _, nav, _) = await OpenNewQuoteAsync(t);
         vm.AddLineCommand.Execute(null);
-        vm.Lines[0].Description = "Peinture façade";
+        vm.Lines[0].Description = "Création du logo";
         vm.Lines[0].UnitPriceText = "1500";
         await vm.IssueCommand.ExecuteAsync(null);
 

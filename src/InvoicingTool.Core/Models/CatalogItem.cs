@@ -2,7 +2,7 @@ using SQLite;
 
 namespace InvoicingTool.Core.Models;
 
-/// <summary>Prestation ou fourniture réutilisable (ex. « Peinture murs, 2 couches » au m²).</summary>
+/// <summary>Article réutilisable : produit ou service vendu régulièrement (ex. « Heure de conseil », « Coupe homme »).</summary>
 public class CatalogItem : EntityBase
 {
     [Indexed]
@@ -10,7 +10,7 @@ public class CatalogItem : EntityBase
 
     public string? Description { get; set; }
 
-    /// <summary>Unité : m², h, u, forfait, ml…</summary>
+    /// <summary>Unité : u, h, jour, forfait…</summary>
     public string Unit { get; set; } = "u";
 
     public decimal UnitPrice { get; set; }

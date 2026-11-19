@@ -25,10 +25,8 @@
 
             <!-- Informations générales -->
             <VerticalStackLayout IsEnabled="{Binding IsEditable}" Spacing="6">
-                <Label Text="Objet" Style="{StaticResource FieldLabel}" />
-                <Entry Text="{Binding Subject}" Placeholder="Ex. Peinture salon et couloir" />
-                <Label Text="Adresse du chantier (si différente)" Style="{StaticResource FieldLabel}" />
-                <Entry Text="{Binding SiteAddress}" />
+                <Label Text="Objet (facultatif)" Style="{StaticResource FieldLabel}" />
+                <Entry Text="{Binding Subject}" />
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                     <VerticalStackLayout>
                         <Label Text="Date" Style="{StaticResource FieldLabel}" />
@@ -42,16 +40,16 @@
             </VerticalStackLayout>
 
             <!-- Lignes -->
-            <Label Text="Prestations" Style="{StaticResource SectionTitle}" />
-            <Label Text="{Binding TaxRateHint}" Style="{StaticResource Secondary}" />
+            <Label Text="Lignes" Style="{StaticResource SectionTitle}" />
+            <Label Text="{Binding TaxRateHint}" IsVisible="{Binding ShowVat}" Style="{StaticResource Secondary}" />
             <VerticalStackLayout BindableLayout.ItemsSource="{Binding Lines}" Spacing="8">
                 <BindableLayout.EmptyView>
-                    <Label Text="Aucune ligne. Ajoutez une prestation ci-dessous." Style="{StaticResource Secondary}" />
+                    <Label Text="Aucune ligne. Ajoutez-en une ci-dessous." Style="{StaticResource Secondary}" />
                 </BindableLayout.EmptyView>
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="vm:LineItemViewModel">
                         <Border Style="{StaticResource Card}">
-                            <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,*,*" ColumnSpacing="6" RowSpacing="2"
+                            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,*,*" ColumnSpacing="6" RowSpacing="2"
                                   IsEnabled="{Binding IsEditable, Source={RelativeSource AncestorType={x:Type vm:DocumentEditViewModel}}, x:DataType=vm:DocumentEditViewModel}">
                                 <Editor Grid.ColumnSpan="3" Text="{Binding Description}" Placeholder="Désignation" AutoSize="TextChanges" />
 
@@ -64,34 +62,28 @@
                                     <Entry Text="{Binding Unit}" />
                                 </VerticalStackLayout>
                                 <VerticalStackLayout Grid.Row="1" Grid.Column="2">
-                                    <Label Text="PU HT" Style="{StaticResource FieldLabel}" />
+                                    <Label Text="{Binding UnitPriceLabel, Source={RelativeSource AncestorType={x:Type vm:DocumentEditViewModel}}, x:DataType=vm:DocumentEditViewModel}"
+                                           Style="{StaticResource FieldLabel}" />
                                     <Entry Text="{Binding UnitPriceText}" Keyboard="Numeric" />
                                 </VerticalStackLayout>
 
+                                <!-- Taux de TVA : masqué si l'entreprise n'est pas assujettie -->
                                 <VerticalStackLayout Grid.Row="2"
                                                      IsVisible="{Binding ShowVat, Source={RelativeSource AncestorType={x:Type vm:DocumentEditViewModel}}, x:DataType=vm:DocumentEditViewModel}">
                                     <Label Text="{Binding TaxName, Source={RelativeSource AncestorType={x:Type vm:DocumentEditViewModel}}, x:DataType=vm:DocumentEditViewModel, StringFormat='{0} (%)'}"
                                            Style="{StaticResource FieldLabel}" />
                                     <Entry Text="{Binding VatRateText}" Keyboard="Numeric" />
                                 </VerticalStackLayout>
-                                <VerticalStackLayout Grid.Row="2" Grid.Column="1">
-                                    <Label Text="Remise (%)" Style="{StaticResource FieldLabel}" />
-                                    <Entry Text="{Binding DiscountText}" Keyboard="Numeric" />
-                                </VerticalStackLayout>
+                                <Button Grid.Row="2" Grid.Column="1" Text="Supprimer" Style="{StaticResource DangerButton}"
+                                        Padding="8,0" HeightRequest="36" VerticalOptions="End"
+                                        IsVisible="{Binding IsEditable, Source={RelativeSource AncestorType={x:Type vm:DocumentEditViewModel}}, x:DataType=vm:DocumentEditViewModel}"
+                                        Command="{Binding RemoveLineCommand, Source={RelativeSource AncestorType={x:Type vm:DocumentEditViewModel}}, x:DataType=vm:DocumentEditViewModel}"
+                                        CommandParameter="{Binding .}" />
                                 <VerticalStackLayout Grid.Row="2" Grid.Column="2" VerticalOptions="End">
-                                    <Label Text="Total HT" Style="{StaticResource FieldLabel}" HorizontalTextAlignment="End" />
+                                    <Label Text="{Binding LineTotalLabel, Source={RelativeSource AncestorType={x:Type vm:DocumentEditViewModel}}, x:DataType=vm:DocumentEditViewModel}"
+                                           Style="{StaticResource FieldLabel}" HorizontalTextAlignment="End" />
                                     <Label Text="{Binding TotalDisplay}" FontFamily="OpenSansSemibold" HorizontalTextAlignment="End" Margin="0,0,0,10" />
                                 </VerticalStackLayout>
-
-                                <HorizontalStackLayout Grid.Row="3" Grid.ColumnSpan="3" HorizontalOptions="End" Spacing="4"
-                                                       IsVisible="{Binding IsEditable, Source={RelativeSource AncestorType={x:Type vm:DocumentEditViewModel}}, x:DataType=vm:DocumentEditViewModel}">
-                                    <Button Text="Monter" Style="{StaticResource OutlineButton}" Padding="12,0" HeightRequest="36"
-                                            Command="{Binding MoveLineUpCommand, Source={RelativeSource AncestorType={x:Type vm:DocumentEditViewModel}}, x:DataType=vm:DocumentEditViewModel}"
-                                            CommandParameter="{Binding .}" />
-                                    <Button Text="Supprimer" Style="{StaticResource DangerButton}" Padding="12,0" HeightRequest="36"
-                                            Command="{Binding RemoveLineCommand, Source={RelativeSource AncestorType={x:Type vm:DocumentEditViewModel}}, x:DataType=vm:DocumentEditViewModel}"
-                                            CommandParameter="{Binding .}" />
-                                </HorizontalStackLayout>
                             </Grid>
                         </Border>
                     </DataTemplate>
@@ -99,26 +91,21 @@
             </VerticalStackLayout>
 
             <Grid ColumnDefinitions="*,*" ColumnSpacing="8" IsVisible="{Binding IsEditable}">
-                <Button Text="+ Ligne libre" Command="{Binding AddLineCommand}" Style="{StaticResource OutlineButton}" />
-                <Button Grid.Column="1" Text="+ Depuis catalogue" Command="{Binding AddFromCatalogCommand}" Style="{StaticResource OutlineButton}" />
+                <Button Text="+ Ligne" Command="{Binding AddLineCommand}" Style="{StaticResource OutlineButton}" />
+                <Button Grid.Column="1" Text="+ Article" Command="{Binding AddFromCatalogCommand}" Style="{StaticResource OutlineButton}" />
             </Grid>
 
-            <!-- Totaux -->
+            <!-- Totaux : sans TVA, seul le total s'affiche -->
             <Border Style="{StaticResource Card}" Margin="0,12,0,0">
-                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
-                    <Label Text="Total HT" />
-                    <Label Grid.Column="1" Text="{Binding TotalExclTaxDisplay}" />
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="4">
+                    <Label Text="Total HT" IsVisible="{Binding ShowVat}" />
+                    <Label Grid.Column="1" Text="{Binding TotalExclTaxDisplay}" IsVisible="{Binding ShowVat}" />
                     <Label Grid.Row="1" Text="{Binding TaxName}" IsVisible="{Binding ShowVat}" />
                     <Label Grid.Row="1" Grid.Column="1" Text="{Binding TotalVatDisplay}" IsVisible="{Binding ShowVat}" />
                     <Label Grid.Row="2" Text="Arrondi" IsVisible="{Binding HasRounding}" />
                     <Label Grid.Row="2" Grid.Column="1" Text="{Binding RoundingDisplay}" IsVisible="{Binding HasRounding}" />
-                    <Label Grid.Row="3" Text="Total TTC" FontFamily="OpenSansSemibold" FontSize="16" />
+                    <Label Grid.Row="3" Text="{Binding GrandTotalLabel}" FontFamily="OpenSansSemibold" FontSize="16" />
                     <Label Grid.Row="3" Grid.Column="1" Text="{Binding TotalInclTaxDisplay}" FontFamily="OpenSansSemibold" FontSize="16" />
-                    <Label Grid.Row="4" Text="{Binding DepositLabel}" VerticalOptions="Center" />
-                    <Entry Grid.Row="4" Grid.Column="1" Text="{Binding DepositText}" Keyboard="Numeric" WidthRequest="110"
-                           HorizontalTextAlignment="End" IsEnabled="{Binding IsEditable}" />
-                    <Label Grid.Row="5" Text="Net à payer" FontFamily="OpenSansSemibold" />
-                    <Label Grid.Row="5" Grid.Column="1" Text="{Binding AmountDueDisplay}" FontFamily="OpenSansSemibold" />
                 </Grid>
             </Border>
 

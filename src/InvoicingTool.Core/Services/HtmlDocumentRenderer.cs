@@ -36,22 +36,18 @@ public static class HtmlDocumentRenderer
           .Append(string.Join(" · ", p.Dates.Select(d => $"{E(d.Label)} : {E(d.Value)}"))).Append("</p>");
         if (p.Subject is not null)
             sb.Append("<p class=\"subject\"><strong>Objet :</strong> ").Append(E(p.Subject)).Append("</p>");
-        if (p.SiteAddress is not null)
-            sb.Append("<p><strong>Adresse du chantier :</strong> ").Append(E(p.SiteAddress)).Append("</p>");
 
         // Lignes
         sb.Append("<table class=\"lines\"><thead><tr><th>Désignation</th><th class=\"n\">Qté</th><th>Unité</th>")
-          .Append("<th class=\"n\">PU HT</th>");
-        if (p.ShowDiscount) sb.Append("<th class=\"n\">Remise</th>");
+          .Append("<th class=\"n\">").Append(E(p.UnitPriceHeader)).Append("</th>");
         if (p.ShowTax) sb.Append("<th class=\"n\">").Append(E(p.TaxName)).Append("</th>");
-        sb.Append("<th class=\"n\">Total HT</th></tr></thead><tbody>");
+        sb.Append("<th class=\"n\">").Append(E(p.TotalHeader)).Append("</th></tr></thead><tbody>");
         foreach (var line in p.Lines)
         {
             sb.Append("<tr><td>").Append(E(line.Description).Replace("\n", "<br>")).Append("</td>")
               .Append("<td class=\"n\">").Append(E(line.Quantity)).Append("</td>")
               .Append("<td>").Append(E(line.Unit)).Append("</td>")
               .Append("<td class=\"n\">").Append(E(line.UnitPrice)).Append("</td>");
-            if (p.ShowDiscount) sb.Append("<td class=\"n\">").Append(E(line.Discount)).Append("</td>");
             if (p.ShowTax) sb.Append("<td class=\"n\">").Append(E(line.TaxRate)).Append("</td>");
             sb.Append("<td class=\"n\">").Append(E(line.Total)).Append("</td></tr>");
         }

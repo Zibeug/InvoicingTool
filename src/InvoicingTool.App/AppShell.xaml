@@ -13,7 +13,7 @@
                       ContentTemplate="{DataTemplate views:QuotesPage}" />
         <ShellContent Title="Factures" Icon="tab_invoices.png" Route="invoices"
                       ContentTemplate="{DataTemplate views:InvoicesPage}" />
-        <ShellContent Title="Prestations" Icon="tab_catalog.png" Route="catalog"
+        <ShellContent Title="Articles" Icon="tab_catalog.png" Route="catalog"
                       ContentTemplate="{DataTemplate views:CatalogPage}" />
         <ShellContent Title="Entreprise" Icon="tab_settings.png" Route="settings"
                       ContentTemplate="{DataTemplate views:SettingsPage}" />

@@ -1,106 +1,92 @@
-# Devis & Factures — application mobile pour artisans
+# Devis & Factures — application mobile simple pour micro-entreprises
 
-Application téléphone (Android / iOS) en **C# / .NET MAUI** permettant à un artisan (peintre, plombier, électricien…)
-de gérer ses clients, faire ses **devis** et ses **factures** directement sur le chantier, **sans connexion internet**.
-Les données sont stockées dans une base **SQLite locale** sur le téléphone ; le modèle est prêt pour une future synchronisation.
+Application téléphone (Android / iOS) en **C# / .NET MAUI** pour faire ses **devis** et ses **factures** en quelques
+minutes, quel que soit le métier : indépendants, consultants, coachs, créatifs, commerçants, services à domicile…
+Tout fonctionne **hors ligne** : les données sont stockées dans une base **SQLite locale** sur le téléphone.
 
 ## Fonctionnalités
 
-- **Clients** : fiche (coordonnées, SIRET pour les pros, notes), recherche, historique des devis et factures.
-- **Devis** et **factures** :
-  - lignes avec quantité, unité (m², h, forfait…), prix HT, TVA par ligne (10 %, 5,5 %, 20 %…), remise ;
-  - totaux HT / TVA par taux / TTC calculés en direct, acompte déduit ;
-  - brouillon modifiable puis **émission** : numéro définitif continu par année (`D-2026-0001`, `F-2026-0001`),
-    document verrouillé ensuite (une facture émise ne se supprime pas, elle s'annule) ;
-  - statuts : envoyé / accepté / refusé pour les devis, à payer / payée / annulée pour les factures ;
-  - **transformation d'un devis en facture** en un geste, duplication d'un document ;
+- **Clients** : coordonnées, recherche, historique des devis et factures.
+- **Articles** : les produits et services vendus souvent (« Heure de conseil — 120 CHF/h »), pour remplir un document en un geste.
+- **Devis et factures** :
+  - lignes simples : désignation, quantité, unité, prix ;
+  - totaux calculés en direct ;
+  - brouillon modifiable puis **émission** avec un numéro définitif continu par année (`D-2026-0001`, `F-2026-0001`) ;
+    un document émis n'est plus modifiable (une facture s'annule, elle ne se supprime pas) ;
+  - statuts (envoyé, accepté, refusé, à payer, payée, annulée), **devis → facture** en un geste, duplication ;
   - sauvegarde automatique en quittant l'écran.
-- **Catalogue de prestations** : « Peinture murs 2 couches — 24 €/m² », réutilisable pour remplir un devis en quelques secondes.
-- **Aperçu** du document à montrer au client sur le téléphone, avec zone « Bon pour accord ».
-- **Export PDF** (A4, polices intégrées, en-tête de tableau répété sur chaque page) : ouverture dans le lecteur
-  PDF du téléphone (impression) ou **envoi** par e-mail, SMS, WhatsApp…
-- **Plusieurs pays et devises** : France, Suisse, Belgique, Luxembourg ou « Autre pays » (réglages libres).
-  Choisir un pays propose sa devise, ses taux de TVA, ses mentions légales et ses usages ; tout reste modifiable.
-- **Mon entreprise** : coordonnées, identifiant (SIRET, IDE, BCE…), assurance, IBAN, non-assujettissement à la TVA
-  avec la mention adaptée au pays, délais par défaut, préfixes de numérotation, conditions de paiement.
+- **PDF** : aperçu à l'écran, ouverture dans le lecteur du téléphone ou envoi par e-mail, SMS, WhatsApp…
+- **Pays et devises** : France, Suisse, Belgique, Luxembourg ou autre ; devise au choix (EUR, CHF, USD, CAD, GBP, FCFA…).
+- **TVA facultative** : si l'entreprise **n'est pas assujettie**, tout ce qui concerne la TVA disparaît de l'application
+  et des documents (pas de taux, pas de « HT » / « TTC », un seul total). Une mention légale peut être imprimée,
+  par exemple « TVA non applicable, art. 293 B du CGI » en France (laisser vide si aucune).
+- **Sauvegarde des données** (onglet Entreprise) : export de toutes les données dans un fichier JSON à garder hors du
+  téléphone (e-mail, Drive, iCloud…), et restauration sur le même ou un nouveau téléphone. Un rappel s'affiche au
+  démarrage si aucune sauvegarde n'a été faite depuis 30 jours.
+- **Conditions générales d'utilisation** à accepter au premier lancement (droit suisse ; l'application n'est pas
+  responsable de la conservation des données), consultables ensuite dans l'onglet Entreprise.
 
 ### Pays pris en charge
 
-| Pays        | Devise | Taux de TVA proposés     | Particularités |
-|-------------|--------|--------------------------|----------------|
-| France      | EUR    | 20 · 10 · 5,5 · 2,1 %    | SIRET, « TVA non applicable, art. 293 B du CGI », pénalités de retard et indemnité de 40 €, mention « Devis reçu avant l'exécution des travaux » |
-| Suisse      | CHF    | 8,1 · 3,8 · 2,6 %        | IDE (CHE-…), montants au format `CHF 1'234.50`, dates `21.10.2026`, **arrondi du total à 0,05** |
-| Belgique    | EUR    | 21 · 12 · 6 · 0 %        | N° d'entreprise (BCE), régime de franchise des petites entreprises |
-| Luxembourg  | EUR    | 17 · 14 · 8 · 3 %        | N° RCS |
-| Autre pays  | au choix | au choix               | libellés génériques |
-
-Devises proposées : EUR, CHF, USD, CAD, GBP, XOF, XAF, MAD, TND, XPF (d'autres codes ISO peuvent être ajoutés
-dans `Currencies`). La TVA est **par ligne** : un même document peut mélanger plusieurs taux, détaillés en pied de document.
+| Pays        | Devise   | Taux de TVA proposés  | Particularités |
+|-------------|----------|-----------------------|----------------|
+| France      | EUR      | 20 · 10 · 5,5 · 2,1 % | SIRET, mention art. 293 B du CGI, pénalités de retard |
+| Suisse      | CHF      | 8,1 · 3,8 · 2,6 %     | IDE (CHE-…), montants `CHF 1'234.50`, dates `21.10.2026`, arrondi à 0,05 |
+| Belgique    | EUR      | 21 · 12 · 6 · 0 %     | n° d'entreprise, régime de franchise des petites entreprises |
+| Luxembourg  | EUR      | 17 · 14 · 8 · 3 %     | n° RCS |
+| Autre pays  | au choix | au choix              | libellés génériques |
 
 Chaque document **fige** sa devise, son pays et son régime de TVA à l'émission : changer ces réglages plus tard
-ne modifie pas les devis et factures déjà émis. Les brouillons, eux, suivent les réglages courants.
+ne modifie pas les documents déjà émis.
 
 ## Architecture
 
 ```
 src/
   InvoicingTool.Core/          Modèles, base SQLite (sqlite-net), règles métier — net10.0, sans dépendance MAUI
-    Models/                    Client, CommercialDocument (devis/facture), DocumentLine, CatalogItem, CompanySettings
+    Models/                    Client, CommercialDocument (devis/facture), DocumentLine, CatalogItem (article),
+                               CompanySettings, CountryProfile (règles par pays), Currency, TermsOfUse (CGU)
     Data/                      AppDatabase + dépôts (suppression logique)
-    Models/CountryProfile.cs   Règles par pays (taux, mentions, libellés, format, arrondi) ; Currency.cs : devises
-    Services/                  DocumentCalculator (montants), DocumentService (cycle de vie, numérotation),
-                               MoneyFormatter (devise + format du pays), PrintableDocument (contenu mis en forme),
-                               HtmlDocumentRenderer (aperçu à l'écran)
+    Services/                  DocumentCalculator, DocumentService (cycle de vie, numérotation), MoneyFormatter,
+                               PrintableDocument + HtmlDocumentRenderer, BackupService (export / restauration)
     Pdf/                       PdfDocumentRenderer (PDFsharp/MigraDoc, licence MIT, 100 % .NET) + polices OpenSans
   InvoicingTool.Presentation/  ViewModels MVVM (CommunityToolkit.Mvvm) — net10.0, testables sans téléphone
-  InvoicingTool.App/           Application .NET MAUI : pages XAML, navigation Shell, services natifs (partage, dialogues)
+  InvoicingTool.App/           Application .NET MAUI : pages XAML, navigation Shell, services natifs
 tests/
   InvoicingTool.Tests/         Tests xUnit du cœur métier et des ViewModels
 ```
 
-Le cœur métier et les ViewModels ne dépendent pas de MAUI : ils sont compilés et testés sur n'importe quelle machine,
-et pourront être réutilisés côté serveur pour la synchronisation.
+### Fichier de sauvegarde
+
+JSON lisible (`format: "InvoicingTool.Backup"`, `version: 1`) contenant les paramètres, clients, articles, documents,
+lignes et compteurs de numérotation. La restauration vérifie le fichier avant de toucher aux données, puis remplace
+tout en une seule transaction (en cas d'erreur, rien n'est modifié). La numérotation continue donc sans doublon.
 
 ### Préparé pour la synchronisation
 
-Chaque entité possède :
+Chaque entité possède un `Id` (GUID), `UpdatedAt`, `IsDeleted` (suppression logique) et `IsDirty`
+(modification pas encore envoyée, voir `Repository.GetPendingChangesAsync()`).
 
-| Champ       | Rôle |
-|-------------|------|
-| `Id` (GUID) | identifiant global, pas de collision entre appareils |
-| `UpdatedAt` | date de dernière modification (UTC), pour détecter les changements |
-| `IsDeleted` | suppression logique, pour propager les suppressions |
-| `IsDirty`   | modification locale pas encore envoyée (`Repository.GetPendingChangesAsync()`) |
+## Conditions d'utilisation
 
-Les documents émis gardent une **copie des coordonnées du client** au moment de l'émission.
-
-> À prévoir avec la synchronisation multi-appareils : la numérotation des factures doit rester continue.
-> Pistes : un préfixe par appareil, ou une numérotation attribuée par le serveur.
+Le texte est dans `src/InvoicingTool.Core/Models/TermsOfUse.cs`. Il est **à faire relire par un juriste** avant
+publication : en droit suisse, une exclusion de responsabilité ne peut pas couvrir le dol ni la faute grave
+(art. 100 CO), et le for doit être précisé. Modifier le texte → augmenter `TermsOfUse.Version` pour que les
+utilisateurs l'acceptent à nouveau.
 
 ## Démarrer
 
-Prérequis : [SDK .NET 10](https://dotnet.microsoft.com/download) et le workload MAUI
-(`dotnet workload install maui`), ou Visual Studio 2026 / Rider avec le support MAUI.
+Prérequis : [SDK .NET 10](https://dotnet.microsoft.com/download) et le workload MAUI (`dotnet workload install maui`),
+ou Visual Studio / Rider avec le support MAUI.
 
 ```bash
-# Tests du cœur métier (toutes plateformes)
-dotnet test tests/InvoicingTool.Tests
-
-# Lancer sur un téléphone / émulateur Android branché
-dotnet build src/InvoicingTool.App -t:Run -f net10.0-android
-
-# iOS (sur un Mac avec Xcode)
-dotnet build src/InvoicingTool.App -t:Run -f net10.0-ios
+dotnet test tests/InvoicingTool.Tests                              # tests (toutes plateformes)
+dotnet build src/InvoicingTool.App -t:Run -f net10.0-android       # téléphone / émulateur Android
+dotnet build src/InvoicingTool.App -t:Run -f net10.0-ios           # iOS (sur un Mac avec Xcode)
 ```
-
-La base de données est créée automatiquement au premier lancement dans le dossier privé de l'application
-(`FileSystem.AppDataDirectory/invoicing.db3`).
 
 ## Pistes pour la suite
 
-- **Signature du client** au doigt sur le devis, intégrée au PDF.
-- **QR-facture suisse** (QR-bill) en bas des factures en CHF.
-- Taxes composées (ex. TPS + TVQ au Québec) : le modèle actuel gère un taux par ligne.
-- **Synchronisation** avec un serveur / autre système (API REST + champs de synchronisation déjà présents).
-- Photos du chantier jointes au devis, relances des factures impayées, factures d'acompte,
-  facturation électronique (obligatoire en France à partir de 2026-2027 selon la taille de l'entreprise).
+- QR-facture suisse en bas des factures en CHF.
+- Sauvegarde automatique vers un dossier cloud choisi par l'utilisateur, puis synchronisation entre appareils.
+- Signature du client au doigt sur le devis.

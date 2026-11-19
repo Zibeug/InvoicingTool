@@ -38,11 +38,14 @@ public static class MauiProgram
 		services.AddSingleton<CatalogRepository>();
 		services.AddSingleton<SettingsRepository>();
 		services.AddSingleton<DocumentService>();
+		services.AddSingleton<BackupService>();
 
 		// Services d'interface
 		services.AddSingleton<INavigationService, ShellNavigationService>();
 		services.AddSingleton<IDialogService, DialogService>();
 		services.AddSingleton<IShareService, ShareService>();
+		services.AddSingleton<IFilePickerService, FilePickerService>();
+		services.AddSingleton<StartupCoordinator>();
 
 		// Écrans
 		services.AddTransient<ClientsViewModel>().AddTransient<ClientsPage>();
@@ -55,12 +58,14 @@ public static class MauiProgram
 		services.AddTransient<CatalogViewModel>().AddTransient<CatalogPage>();
 		services.AddTransient<CatalogItemEditViewModel>().AddTransient<CatalogItemEditPage>();
 		services.AddTransient<SettingsViewModel>().AddTransient<SettingsPage>();
+		services.AddTransient<TermsViewModel>().AddTransient<TermsPage>();
 
 		Routing.RegisterRoute(Routes.ClientEdit, typeof(ClientEditPage));
 		Routing.RegisterRoute(Routes.ClientPicker, typeof(ClientPickerPage));
 		Routing.RegisterRoute(Routes.DocumentEdit, typeof(DocumentEditPage));
 		Routing.RegisterRoute(Routes.DocumentPreview, typeof(DocumentPreviewPage));
 		Routing.RegisterRoute(Routes.CatalogItemEdit, typeof(CatalogItemEditPage));
+		Routing.RegisterRoute(Routes.Terms, typeof(TermsPage));
 
 #if DEBUG
 		builder.Logging.AddDebug();

@@ -51,7 +51,7 @@ public abstract partial class DocumentsViewModel : ViewModelBase
         var pending = result
             .Where(d => d.Status == DocumentStatus.Issued)
             .GroupBy(d => (d.CurrencyCode, d.CountryCode))
-            .Select(g => new MoneyFormatter(g.Key.CurrencyCode, g.Key.CountryCode).Format(g.Sum(d => d.AmountDue)))
+            .Select(g => new MoneyFormatter(g.Key.CurrencyCode, g.Key.CountryCode).Format(g.Sum(d => d.TotalInclTax)))
             .ToList();
         PendingAmountDisplay = pending.Count == 0 ? "—" : string.Join("  ·  ", pending);
     }

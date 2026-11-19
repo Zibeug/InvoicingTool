@@ -7,14 +7,14 @@ using InvoicingTool.Presentation.Abstractions;
 
 namespace InvoicingTool.Presentation.ViewModels;
 
-/// <summary>Prestation affichée dans la liste, avec son prix formaté dans la devise de l'entreprise.</summary>
+/// <summary>Article affiché dans la liste, avec son prix formaté dans la devise de l'entreprise.</summary>
 public sealed record CatalogItemRow(CatalogItem Item, string PriceDisplay)
 {
     public string Label => Item.Label;
     public string? Description => Item.Description;
 }
 
-/// <summary>Catalogue des prestations et fournitures habituelles de l'artisan.</summary>
+/// <summary>Catalogue des produits et services vendus régulièrement.</summary>
 public partial class CatalogViewModel : ViewModelBase
 {
     private readonly CatalogRepository _catalog;
@@ -30,7 +30,7 @@ public partial class CatalogViewModel : ViewModelBase
         _catalog = catalog;
         _settings = settings;
         _navigation = navigation;
-        Title = "Prestations";
+        Title = "Articles";
     }
 
     public ObservableCollection<CatalogItemRow> Items { get; } = [];

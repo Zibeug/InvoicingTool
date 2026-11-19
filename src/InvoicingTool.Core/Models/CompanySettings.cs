@@ -1,6 +1,6 @@
 namespace InvoicingTool.Core.Models;
 
-/// <summary>Informations de l'entreprise de l'artisan, imprimées sur les devis et factures.</summary>
+/// <summary>Informations de l'entreprise, imprimées sur les devis et factures, et préférences de l'application.</summary>
 public class CompanySettings : EntityBase
 {
     public static readonly Guid SingletonId = new("00000000-0000-0000-0000-000000000001");
@@ -15,11 +15,8 @@ public class CompanySettings : EntityBase
     public string? Phone { get; set; }
     public string? Email { get; set; }
     /// <summary>Identifiant de l'entreprise : SIRET (FR), IDE (CH), BCE (BE)… selon le pays.</summary>
-    public string? Siret { get; set; }
+    public string? CompanyId { get; set; }
     public string? VatNumber { get; set; }
-
-    /// <summary>Assurance décennale (France) ou RC professionnelle.</summary>
-    public string? InsuranceInfo { get; set; }
 
     public string? Iban { get; set; }
 
@@ -49,6 +46,13 @@ public class CompanySettings : EntityBase
     public string InvoicePrefix { get; set; } = "F";
 
     public string? PaymentTerms { get; set; } = CountryProfiles.France.DefaultPaymentTerms;
+
+    /// <summary>Version des conditions d'utilisation acceptée (null tant qu'elles ne l'ont pas été).</summary>
+    public string? TermsAcceptedVersion { get; set; }
+    public DateTime? TermsAcceptedAt { get; set; }
+
+    /// <summary>Date de la dernière sauvegarde exportée par l'utilisateur.</summary>
+    public DateTime? LastBackupAt { get; set; }
 
     public CountryProfile Country => CountryProfiles.Get(CountryCode);
 

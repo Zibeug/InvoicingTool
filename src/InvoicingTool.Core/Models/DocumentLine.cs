@@ -15,14 +15,11 @@ public class DocumentLine : EntityBase
 
     public string Unit { get; set; } = "u";
 
-    /// <summary>Prix unitaire hors taxes.</summary>
+    /// <summary>Prix unitaire, hors taxes si l'entreprise est assujettie à la TVA.</summary>
     public decimal UnitPrice { get; set; }
 
-    /// <summary>Taux de TVA en pourcentage.</summary>
+    /// <summary>Taux de TVA en pourcentage (0 si l'entreprise n'est pas assujettie).</summary>
     public decimal VatRate { get; set; }
-
-    /// <summary>Remise sur la ligne, en pourcentage.</summary>
-    public decimal DiscountPercent { get; set; }
 
     [Ignore]
     public decimal TotalExclTax => Services.DocumentCalculator.LineTotalExclTax(this);
@@ -36,6 +33,5 @@ public class DocumentLine : EntityBase
         Unit = Unit,
         UnitPrice = UnitPrice,
         VatRate = VatRate,
-        DiscountPercent = DiscountPercent,
     };
 }

@@ -8,15 +8,15 @@
     x:DataType="vm:CatalogViewModel">
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="+ Prestation" Command="{Binding AddCommand}" />
+        <ToolbarItem Text="+ Article" Command="{Binding AddCommand}" />
     </ContentPage.ToolbarItems>
 
     <CollectionView ItemsSource="{Binding Items}" Margin="12,8">
         <CollectionView.EmptyView>
             <VerticalStackLayout Padding="24" Spacing="12" HorizontalOptions="Center">
-                <Label Text="Enregistrez vos prestations habituelles (ex. « Peinture murs 2 couches » au m²) pour remplir vos devis en quelques secondes."
+                <Label Text="Enregistrez les produits et services que vous vendez souvent pour remplir vos devis et factures en quelques secondes."
                        HorizontalTextAlignment="Center" />
-                <Button Text="Ajouter une prestation" Command="{Binding AddCommand}" />
+                <Button Text="Ajouter un article" Command="{Binding AddCommand}" />
             </VerticalStackLayout>
         </CollectionView.EmptyView>
         <CollectionView.ItemTemplate>

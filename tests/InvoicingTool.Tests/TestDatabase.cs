@@ -19,6 +19,7 @@ public sealed class TestDatabase : IAsyncDisposable
         Settings = new SettingsRepository(Database, Clock);
         Catalog = new CatalogRepository(Database, Clock);
         Service = new DocumentService(Database, Documents, Settings, Clock);
+        Backup = new BackupService(Database, Settings, Clock);
     }
 
     public FakeTimeProvider Clock { get; }
@@ -28,6 +29,7 @@ public sealed class TestDatabase : IAsyncDisposable
     public SettingsRepository Settings { get; }
     public CatalogRepository Catalog { get; }
     public DocumentService Service { get; }
+    public BackupService Backup { get; }
 
     public async ValueTask DisposeAsync()
     {

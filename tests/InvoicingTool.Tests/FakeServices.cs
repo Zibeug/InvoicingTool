@@ -38,3 +38,25 @@ public sealed class FakeDialogs : IDialogService
     public Task<string?> ChooseAsync(string title, IReadOnlyList<string> options, string cancel = "Annuler") =>
         Task.FromResult(Choose(options));
 }
+
+public sealed class FakeShare : IShareService
+{
+    public List<(string FileName, byte[] Content, string ContentType)> Shared { get; } = [];
+
+    public Task ShareFileAsync(string fileName, byte[] content, string contentType, string title)
+    {
+        Shared.Add((fileName, content, contentType));
+        return Task.CompletedTask;
+    }
+
+    public Task OpenFileAsync(string fileName, byte[] content, string contentType, string title) =>
+        ShareFileAsync(fileName, content, contentType, title);
+}
+
+public sealed class FakeFilePicker : IFilePickerService
+{
+    public byte[]? Content { get; set; }
+
+    public Task<Stream?> PickBackupFileAsync() =>
+        Task.FromResult<Stream?>(Content is null ? null : new MemoryStream(Content));
+}

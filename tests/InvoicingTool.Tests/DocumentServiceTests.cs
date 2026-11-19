@@ -184,7 +184,7 @@ public class DocumentServiceTests
         var quote = await t.Service.CreateDraftAsync(DocumentType.Quote, client);
         await t.Service.SaveDraftAsync(quote, SampleLines());
         await t.Service.IssueAsync(quote);
-        var company = new CompanySettings { CompanyName = "Peinture Durand", Siret = "123 456 789 00012" };
+        var company = new CompanySettings { CompanyName = "Peinture Durand", CompanyId = "123 456 789 00012" };
 
         var html = HtmlDocumentRenderer.Render(quote, await t.Service.GetLinesAsync(quote.Id), company);
 

@@ -21,7 +21,6 @@ public partial class LineItemViewModel : ObservableObject
         _quantityText = DecimalParser.Format(line.Quantity);
         _unitPriceText = DecimalParser.Format(line.UnitPrice);
         _vatRateText = DecimalParser.Format(line.VatRate);
-        _discountText = DecimalParser.Format(line.DiscountPercent);
     }
 
     public DocumentLine Line { get; }
@@ -34,7 +33,6 @@ public partial class LineItemViewModel : ObservableObject
     [ObservableProperty] private string _quantityText;
     [ObservableProperty] private string _unitPriceText;
     [ObservableProperty] private string _vatRateText;
-    [ObservableProperty] private string _discountText;
 
     public decimal TotalExclTax => DocumentCalculator.LineTotalExclTax(Line);
 
@@ -42,14 +40,13 @@ public partial class LineItemViewModel : ObservableObject
 
     public bool HasErrors =>
         !DecimalParser.TryParse(QuantityText, out _) || !DecimalParser.TryParse(UnitPriceText, out _) ||
-        !DecimalParser.TryParse(VatRateText, out _) || !DecimalParser.TryParse(DiscountText, out _);
+        !DecimalParser.TryParse(VatRateText, out _);
 
     partial void OnDescriptionChanged(string value) => Line.Description = value;
     partial void OnUnitChanged(string value) => Line.Unit = value;
     partial void OnQuantityTextChanged(string value) => UpdateAmount(() => Line.Quantity = DecimalParser.ParseOrZero(value));
     partial void OnUnitPriceTextChanged(string value) => UpdateAmount(() => Line.UnitPrice = DecimalParser.ParseOrZero(value));
     partial void OnVatRateTextChanged(string value) => UpdateAmount(() => Line.VatRate = DecimalParser.ParseOrZero(value));
-    partial void OnDiscountTextChanged(string value) => UpdateAmount(() => Line.DiscountPercent = DecimalParser.ParseOrZero(value));
 
     private void UpdateAmount(Action apply)
     {

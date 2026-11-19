@@ -24,10 +24,8 @@ public class CommercialDocument : EntityBase
     public string? ClientAddress { get; set; }
     public string? ClientCompanyId { get; set; }
 
+    /// <summary>Objet du document (ex. « Création du site web », « Réparation chaudière »).</summary>
     public string? Title { get; set; }
-
-    /// <summary>Adresse du chantier si différente de celle du client.</summary>
-    public string? SiteAddress { get; set; }
 
     public DateTime IssueDate { get; set; } = DateTime.Today;
 
@@ -48,9 +46,6 @@ public class CommercialDocument : EntityBase
     public bool VatExempt { get; set; }
     public decimal RoundingIncrement { get; set; }
 
-    /// <summary>Acompte déjà versé (TTC), déduit du net à payer.</summary>
-    public decimal DepositAmount { get; set; }
-
     // Totaux dénormalisés pour l'affichage rapide des listes. Recalculés à chaque enregistrement.
     public decimal TotalExclTax { get; set; }
     public decimal TotalVat { get; set; }
@@ -58,9 +53,6 @@ public class CommercialDocument : EntityBase
 
     [Ignore]
     public bool IsEditable => Status == DocumentStatus.Draft;
-
-    [Ignore]
-    public decimal AmountDue => TotalInclTax - DepositAmount;
 
     [Ignore]
     public string DisplayNumber => Number ?? "Brouillon";

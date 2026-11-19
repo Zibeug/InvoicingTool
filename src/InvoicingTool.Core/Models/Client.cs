@@ -15,7 +15,7 @@ public class Client : EntityBase
     public string? PostalCode { get; set; }
     public string? City { get; set; }
 
-    /// <summary>SIRET ou n° TVA intracommunautaire pour un client professionnel.</summary>
+    /// <summary>Numéro d'entreprise (SIRET, IDE, TVA…) pour un client professionnel.</summary>
     public string? CompanyId { get; set; }
 
     public string? Notes { get; set; }

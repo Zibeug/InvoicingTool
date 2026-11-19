@@ -15,6 +15,7 @@ public static class Routes
     public const string DocumentEdit = "document";
     public const string DocumentPreview = "document-preview";
     public const string CatalogItemEdit = "catalog-item";
+    public const string Terms = "terms";
 
     // Paramètres
     public const string IdParameter = "id";

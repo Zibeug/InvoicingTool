@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<views:BasePage
+    x:Class="InvoicingTool.App.Views.TermsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:InvoicingTool.App.Views"
+    xmlns:vm="clr-namespace:InvoicingTool.Presentation.ViewModels;assembly=InvoicingTool.Presentation"
+    x:DataType="vm:TermsViewModel"
+    Shell.PresentationMode="ModalAnimated">
+
+    <Grid RowDefinitions="Auto,*,Auto" Padding="16">
+        <VerticalStackLayout Spacing="2">
+            <Label Text="{Binding Title}" FontFamily="OpenSansSemibold" FontSize="20" />
+            <Label Text="{Binding VersionLabel}" Style="{StaticResource Secondary}" />
+        </VerticalStackLayout>
+
+        <ScrollView Grid.Row="1" Margin="0,12">
+            <Label Text="{Binding Text}" LineHeight="1.3" />
+        </ScrollView>
+
+        <!-- Premier lancement : accepter est obligatoire -->
+        <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="8" IsVisible="{Binding MustAccept}">
+            <Button Text="Refuser" Command="{Binding DeclineCommand}" Style="{StaticResource OutlineButton}" />
+            <Button Grid.Column="1" Text="J'accepte" Command="{Binding AcceptCommand}" />
+        </Grid>
+        <Button Grid.Row="2" Text="Fermer" Command="{Binding CloseCommand}" IsVisible="{Binding IsAccepted}" />
+    </Grid>
+</views:BasePage>

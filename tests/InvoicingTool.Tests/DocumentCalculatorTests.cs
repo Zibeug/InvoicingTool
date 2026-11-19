@@ -6,11 +6,11 @@ namespace InvoicingTool.Tests;
 public class DocumentCalculatorTests
 {
     [Fact]
-    public void Line_total_applies_quantity_price_and_discount_rounded_to_cents()
+    public void Line_total_is_quantity_times_price_rounded_to_cents()
     {
-        var line = new DocumentLine { Quantity = 12.5m, UnitPrice = 18.333m, DiscountPercent = 10m };
-        // 12.5 * 18.333 * 0.9 = 206.24625
-        Assert.Equal(206.25m, DocumentCalculator.LineTotalExclTax(line));
+        var line = new DocumentLine { Quantity = 12.5m, UnitPrice = 18.333m };
+        // 12.5 * 18.333 = 229.1625
+        Assert.Equal(229.16m, DocumentCalculator.LineTotalExclTax(line));
     }
 
     [Fact]

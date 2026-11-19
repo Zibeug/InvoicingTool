@@ -24,7 +24,7 @@ public sealed record CountryProfile
     public required IReadOnlyList<decimal> TaxRates { get; init; }
     public required decimal DefaultTaxRate { get; init; }
 
-    /// <summary>Aide à la saisie : quel taux pour quel type de travaux.</summary>
+    /// <summary>Aide à la saisie : à quoi correspond chaque taux.</summary>
     public string? TaxRateHint { get; init; }
 
     /// <summary>Mention obligatoire lorsque l'entreprise n'est pas assujettie à la taxe.</summary>
@@ -36,7 +36,6 @@ public sealed record CountryProfile
     /// <summary>Exemples de format affichés dans les champs de saisie (non imprimés).</summary>
     public string? CompanyIdExample { get; init; }
     public string? VatNumberExample { get; init; }
-    public string InsuranceLabel { get; init; } = "Assurance professionnelle";
 
     public required string DefaultPaymentTerms { get; init; }
 
@@ -55,19 +54,16 @@ public static class CountryProfiles
         CultureName = "fr-FR",
         DefaultCurrency = "EUR",
         TaxRates = [20m, 10m, 5.5m, 2.1m],
-        DefaultTaxRate = 10m,
-        TaxRateHint = "10 % : rénovation d'un logement de plus de 2 ans · 5,5 % : rénovation énergétique · 20 % : autres cas.",
+        DefaultTaxRate = 20m,
+        TaxRateHint = "20 % : taux normal · 10 %, 5,5 % et 2,1 % : taux réduits selon l'activité.",
         TaxExemptionMention = "TVA non applicable, art. 293 B du CGI.",
         CompanyIdLabel = "SIRET",
         CompanyIdExample = "123 456 789 00012",
         VatNumberLabel = "N° TVA intracommunautaire",
         VatNumberExample = "FR12 123456789",
-        InsuranceLabel = "Assurance décennale",
         DefaultPaymentTerms =
             "En cas de retard de paiement, des pénalités au taux de 3 fois le taux d'intérêt légal seront appliquées, " +
             "ainsi qu'une indemnité forfaitaire pour frais de recouvrement de 40 €. Pas d'escompte pour paiement anticipé.",
-        QuoteAcceptanceText =
-            "Bon pour accord — date et signature du client, précédées de la mention « Devis reçu avant l'exécution des travaux » :",
     };
 
     public static readonly CountryProfile Switzerland = new()
@@ -85,7 +81,6 @@ public static class CountryProfiles
         CompanyIdExample = "CHE-123.456.789",
         VatNumberLabel = "N° TVA",
         VatNumberExample = "CHE-123.456.789 TVA",
-        InsuranceLabel = "Assurance RC professionnelle",
         DefaultPaymentTerms = "Payable à 30 jours net.",
         RoundingIncrement = 0.05m,
     };
@@ -98,13 +93,12 @@ public static class CountryProfiles
         DefaultCurrency = "EUR",
         TaxRates = [21m, 12m, 6m, 0m],
         DefaultTaxRate = 21m,
-        TaxRateHint = "6 % : rénovation d'un logement privé de plus de 10 ans · 21 % : autres cas.",
+        TaxRateHint = "21 % : taux normal · 12 % et 6 % : taux réduits selon l'activité.",
         TaxExemptionMention = "Régime particulier de franchise des petites entreprises. TVA non applicable.",
         CompanyIdLabel = "N° d'entreprise",
         CompanyIdExample = "0123.456.789",
         VatNumberLabel = "N° TVA",
         VatNumberExample = "BE0123.456.789",
-        InsuranceLabel = "Assurance RC professionnelle",
         DefaultPaymentTerms =
             "En cas de retard de paiement, des intérêts de retard et une indemnité forfaitaire pourront être réclamés " +
             "conformément à la loi du 2 août 2002.",
@@ -118,6 +112,7 @@ public static class CountryProfiles
         DefaultCurrency = "EUR",
         TaxRates = [17m, 14m, 8m, 3m],
         DefaultTaxRate = 17m,
+        TaxRateHint = "17 % : taux normal · 14 %, 8 % et 3 % : taux réduits selon l'activité.",
         TaxExemptionMention = "TVA non applicable — régime de franchise des petites entreprises.",
         CompanyIdLabel = "N° RCS",
         CompanyIdExample = "B123456",
