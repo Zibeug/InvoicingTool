@@ -199,7 +199,7 @@ public class CountryAndPdfTests
     {
         await using var t = new TestDatabase();
         var dialogs = new FakeDialogs { ConfirmResult = true };
-        var vm = new SettingsViewModel(t.Settings, new BackupService(t.Database, t.Settings, t.Clock), new FakeShare(), new FakeFilePicker(), new FakeNavigation(), dialogs);
+        var vm = t.CreateSettingsViewModel(dialogs);
         await vm.OnAppearingAsync();
 
         await vm.ProposeCountryDefaultsAsync(CountryProfiles.Switzerland);

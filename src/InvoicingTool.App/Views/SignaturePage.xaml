@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<views:BasePage
+    x:Class="InvoicingTool.App.Views.SignaturePage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:views="clr-namespace:InvoicingTool.App.Views"
+    xmlns:vm="clr-namespace:InvoicingTool.Presentation.ViewModels;assembly=InvoicingTool.Presentation"
+    x:DataType="vm:SignatureViewModel">
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" Padding="16" RowSpacing="8">
+        <Label Text="{Binding Summary}" FontFamily="OpenSansSemibold" />
+        <Label Grid.Row="1" Text="{Binding AcceptanceText}" Style="{StaticResource Secondary}" />
+
+        <!-- Zone de signature : le client signe au doigt -->
+        <Border Grid.Row="2" Stroke="{StaticResource Gray400}" StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                BackgroundColor="White" MinimumHeightRequest="180">
+            <Grid>
+                <Label Text="Signez ici" TextColor="{StaticResource Gray300}" FontSize="24"
+                       HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True" />
+                <toolkit:DrawingView x:Name="Pad" LineColor="#1A1A40" LineWidth="4"
+                                     IsMultiLineModeEnabled="True" ShouldClearOnFinish="False"
+                                     BackgroundColor="Transparent" />
+            </Grid>
+        </Border>
+
+        <VerticalStackLayout Grid.Row="3" Spacing="2">
+            <Label Text="Nom du signataire" Style="{StaticResource FieldLabel}" />
+            <Entry Text="{Binding SignerName}" />
+        </VerticalStackLayout>
+
+        <Grid Grid.Row="4" ColumnDefinitions="*,*" ColumnSpacing="8">
+            <Button Text="Effacer" Clicked="OnClearClicked" Style="{StaticResource OutlineButton}" />
+            <Button Grid.Column="1" Text="Valider la signature" Clicked="OnValidateClicked" IsEnabled="{Binding IsNotBusy}" />
+        </Grid>
+    </Grid>
+</views:BasePage>

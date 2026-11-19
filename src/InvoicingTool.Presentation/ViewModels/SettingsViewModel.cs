@@ -17,7 +17,12 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly IShareService _share;
     private readonly IFilePickerService _filePicker;
     private readonly INavigationService _navigation;
+    private readonly IImagePickerService _imagePicker;
+    private readonly DocumentService _documents;
+    private readonly TimeProvider _clock;
     private CompanySettings _company = new();
+    private int _loadedNextQuote;
+    private int _loadedNextInvoice;
     private bool _loading;
 
     public SettingsViewModel(
@@ -25,9 +30,15 @@ public partial class SettingsViewModel : ViewModelBase
         BackupService backup,
         IShareService share,
         IFilePickerService filePicker,
+        IImagePickerService imagePicker,
+        DocumentService documents,
         INavigationService navigation,
+        TimeProvider clock,
         IDialogService dialogs) : base(dialogs)
     {
+        _imagePicker = imagePicker;
+        _documents = documents;
+        _clock = clock;
         _settings = settings;
         _backup = backup;
         _share = share;
@@ -38,6 +49,37 @@ public partial class SettingsViewModel : ViewModelBase
 
     public IReadOnlyList<CountryProfile> Countries => CountryProfiles.All;
     public IReadOnlyList<Currency> CurrencyList => Currencies.All;
+
+    /// <summary>Couleurs proposées pour les documents ; une couleur libre (#RRGGBB) peut aussi être saisie.</summary>
+    public IReadOnlyList<string> AccentColors { get; } =
+        ["#2B5797", "#1B3A66", "#00838F", "#2E7D32", "#F9A825", "#EF6C00", "#C62828", "#C2185B", "#6A1B9A", "#424242"];
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasLogo))]
+    private byte[]? _logo;
+
+    public bool HasLogo => Logo is { Length: > 0 };
+
+    [ObservableProperty] private string _accentColor = CompanySettings.DefaultAccentColor;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(NextQuotePreview))]
+    private string _nextQuoteNumberText = "1";
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(NextInvoicePreview))]
+    private string _nextInvoiceNumberText = "1";
+
+    private int Year => _clock.GetLocalNow().Year;
+
+    public string NextQuotePreview => Preview(QuotePrefix, NextQuoteNumberText);
+    public string NextInvoicePreview => Preview(InvoicePrefix, NextInvoiceNumberText);
+
+    partial void OnQuotePrefixChanged(string value) => OnPropertyChanged(nameof(NextQuotePreview));
+    partial void OnInvoicePrefixChanged(string value) => OnPropertyChanged(nameof(NextInvoicePreview));
+
+    private string Preview(string prefix, string numberText) =>
+        int.TryParse(numberText, out var n) && n > 0 ? $"Prochain numéro : {prefix}-{Year}-{n:D4}" : "Numéro invalide";
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CompanyIdLabel), nameof(VatNumberLabel), nameof(TaxRateHint),
@@ -97,7 +139,9 @@ public partial class SettingsViewModel : ViewModelBase
             Email = _company.Email;
             CompanyId = _company.CompanyId;
             VatNumber = _company.VatNumber;
-            Iban = _company.Iban;
+            Iban = string.IsNullOrWhiteSpace(_company.Iban) ? null : Core.Services.Iban.Format(_company.Iban);
+            Logo = _company.Logo;
+            AccentColor = ImageData.NormalizeColor(_company.AccentColor, CompanySettings.DefaultAccentColor);
             VatExempt = _company.VatExempt;
             VatExemptionMention = _company.VatExemptionMention;
             TaxRatesText = FormatRates(_company.TaxRates);
@@ -108,6 +152,10 @@ public partial class SettingsViewModel : ViewModelBase
             QuotePrefix = _company.QuotePrefix;
             InvoicePrefix = _company.InvoicePrefix;
             PaymentTerms = _company.PaymentTerms;
+            _loadedNextQuote = await _documents.GetNextNumberAsync(DocumentType.Quote, Year);
+            _loadedNextInvoice = await _documents.GetNextNumberAsync(DocumentType.Invoice, Year);
+            NextQuoteNumberText = _loadedNextQuote.ToString();
+            NextInvoiceNumberText = _loadedNextInvoice.ToString();
             LastBackupDisplay = _company.LastBackupAt is { } last ? last.ToLocalTime().ToString("dd.MM.yyyy HH:mm") : "Jamais";
             TermsAcceptedDisplay = _company.TermsAcceptedAt is { } accepted
                 ? $"Acceptées le {accepted.ToLocalTime():dd.MM.yyyy} (version {_company.TermsAcceptedVersion})"
@@ -173,6 +221,31 @@ public partial class SettingsViewModel : ViewModelBase
             await Dialogs.AlertAsync("Paramètres", "Les préfixes de numérotation sont obligatoires.");
             return;
         }
+        if (!int.TryParse(NextQuoteNumberText, out var nextQuote) || nextQuote < 1 ||
+            !int.TryParse(NextInvoiceNumberText, out var nextInvoice) || nextInvoice < 1)
+        {
+            await Dialogs.AlertAsync("Paramètres", "Les numéros de départ doivent être des nombres entiers à partir de 1.");
+            return;
+        }
+        if (!string.IsNullOrWhiteSpace(Iban) && !Core.Services.Iban.IsValid(Iban))
+        {
+            await Dialogs.AlertAsync("Paramètres", "L'IBAN saisi n'est pas valide. Vérifiez qu'il n'y a pas de faute de frappe.");
+            return;
+        }
+        var accent = ImageData.NormalizeColor(AccentColor, string.Empty);
+        if (accent.Length == 0)
+        {
+            await Dialogs.AlertAsync("Paramètres", "La couleur doit être au format #RRGGBB (ex. #2B5797).");
+            return;
+        }
+
+        // Numérotation d'abord : un numéro refusé (doublon) n'enregistre rien d'autre.
+        if (nextQuote != _loadedNextQuote)
+            await _documents.SetNextNumberAsync(DocumentType.Quote, Year, nextQuote);
+        _loadedNextQuote = nextQuote;
+        if (nextInvoice != _loadedNextInvoice)
+            await _documents.SetNextNumberAsync(DocumentType.Invoice, Year, nextInvoice);
+        _loadedNextInvoice = nextInvoice;
 
         // Repart des réglages enregistrés : la date de sauvegarde ou l'acceptation des CGU
         // ont pu changer depuis l'ouverture de l'écran.
@@ -188,7 +261,11 @@ public partial class SettingsViewModel : ViewModelBase
         _company.Email = Email;
         _company.CompanyId = CompanyId;
         _company.VatNumber = VatNumber;
-        _company.Iban = Iban;
+        _company.Iban = string.IsNullOrWhiteSpace(Iban) ? null : Core.Services.Iban.Normalize(Iban);
+        Iban = _company.Iban is null ? null : Core.Services.Iban.Format(_company.Iban);
+        _company.Logo = HasLogo ? Logo : null;
+        _company.AccentColor = accent;
+        AccentColor = accent;
         _company.VatExempt = VatExempt;
         _company.VatExemptionMention = VatExemptionMention;
         _company.TaxRatesText = CompanySettings.FormatRates(rates);
@@ -234,6 +311,30 @@ public partial class SettingsViewModel : ViewModelBase
         await OnAppearingAsync();
         await Dialogs.AlertAsync("Restaurer la sauvegarde", "Les données ont été restaurées.");
     });
+
+    [RelayCommand]
+    private Task PickLogoAsync() => RunAsync(async () =>
+    {
+        var image = await _imagePicker.PickLogoAsync();
+        if (image is null)
+            return;
+        if (!ImageData.IsSupported(image))
+        {
+            await Dialogs.AlertAsync("Logo", "Format d'image non pris en charge (PNG ou JPEG).");
+            return;
+        }
+        Logo = image;
+    });
+
+    [RelayCommand]
+    private void RemoveLogo() => Logo = null;
+
+    [RelayCommand]
+    private void SelectColor(string? hex)
+    {
+        if (hex is not null)
+            AccentColor = hex;
+    }
 
     [RelayCommand]
     private Task ShowTermsAsync() => _navigation.GoToAsync(Routes.Terms);

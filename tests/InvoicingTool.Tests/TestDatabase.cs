@@ -1,5 +1,7 @@
 using InvoicingTool.Core.Data;
 using InvoicingTool.Core.Services;
+using InvoicingTool.Presentation.Abstractions;
+using InvoicingTool.Presentation.ViewModels;
 using Microsoft.Extensions.Time.Testing;
 
 namespace InvoicingTool.Tests;
@@ -30,6 +32,12 @@ public sealed class TestDatabase : IAsyncDisposable
     public CatalogRepository Catalog { get; }
     public DocumentService Service { get; }
     public BackupService Backup { get; }
+
+    public SettingsViewModel CreateSettingsViewModel(
+        IDialogService? dialogs = null, IShareService? share = null,
+        IFilePickerService? filePicker = null, IImagePickerService? imagePicker = null) =>
+        new(Settings, Backup, share ?? new FakeShare(), filePicker ?? new FakeFilePicker(),
+            imagePicker ?? new FakeImagePicker(), Service, new FakeNavigation(), Clock, dialogs ?? new FakeDialogs());
 
     public async ValueTask DisposeAsync()
     {

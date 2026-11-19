@@ -60,3 +60,10 @@ public sealed class FakeFilePicker : IFilePickerService
     public Task<Stream?> PickBackupFileAsync() =>
         Task.FromResult<Stream?>(Content is null ? null : new MemoryStream(Content));
 }
+
+public sealed class FakeImagePicker : IImagePickerService
+{
+    public byte[]? Image { get; set; }
+
+    public Task<byte[]?> PickLogoAsync() => Task.FromResult(Image);
+}

@@ -42,6 +42,7 @@ public sealed class AppDatabase : IAsyncDisposable
                     typeof(CatalogItem),
                     typeof(CommercialDocument),
                     typeof(DocumentLine),
+                    typeof(DocumentSignature),
                     typeof(CompanySettings),
                     typeof(NumberSequence)).ConfigureAwait(false);
                 _initialized = true;

@@ -32,6 +32,14 @@ public class DocumentRepository(AppDatabase database, TimeProvider clock) : Repo
         return docs.OrderByDescending(d => d.IssueDate).ToList();
     }
 
+    public async Task<DocumentSignature?> GetSignatureAsync(Guid documentId)
+    {
+        var db = await Database.GetConnectionAsync().ConfigureAwait(false);
+        return await db.Table<DocumentSignature>()
+            .Where(s => s.DocumentId == documentId && !s.IsDeleted)
+            .FirstOrDefaultAsync().ConfigureAwait(false);
+    }
+
     public async Task<List<DocumentLine>> GetLinesAsync(Guid documentId)
     {
         var db = await Database.GetConnectionAsync().ConfigureAwait(false);

@@ -1,4 +1,5 @@
 using System.Globalization;
+using CommunityToolkit.Maui;
 using InvoicingTool.App.Services;
 using InvoicingTool.App.Views;
 using InvoicingTool.Core.Data;
@@ -22,6 +23,7 @@ public static class MauiProgram
 		var builder = MauiApp.CreateBuilder();
 		builder
 			.UseMauiApp<App>()
+			.UseMauiCommunityToolkit()
 			.ConfigureFonts(fonts =>
 			{
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -45,6 +47,7 @@ public static class MauiProgram
 		services.AddSingleton<IDialogService, DialogService>();
 		services.AddSingleton<IShareService, ShareService>();
 		services.AddSingleton<IFilePickerService, FilePickerService>();
+		services.AddSingleton<IImagePickerService, ImagePickerService>();
 		services.AddSingleton<StartupCoordinator>();
 
 		// Écrans
@@ -59,6 +62,7 @@ public static class MauiProgram
 		services.AddTransient<CatalogItemEditViewModel>().AddTransient<CatalogItemEditPage>();
 		services.AddTransient<SettingsViewModel>().AddTransient<SettingsPage>();
 		services.AddTransient<TermsViewModel>().AddTransient<TermsPage>();
+		services.AddTransient<SignatureViewModel>().AddTransient<SignaturePage>();
 
 		Routing.RegisterRoute(Routes.ClientEdit, typeof(ClientEditPage));
 		Routing.RegisterRoute(Routes.ClientPicker, typeof(ClientPickerPage));
@@ -66,6 +70,7 @@ public static class MauiProgram
 		Routing.RegisterRoute(Routes.DocumentPreview, typeof(DocumentPreviewPage));
 		Routing.RegisterRoute(Routes.CatalogItemEdit, typeof(CatalogItemEditPage));
 		Routing.RegisterRoute(Routes.Terms, typeof(TermsPage));
+		Routing.RegisterRoute(Routes.Signature, typeof(SignaturePage));
 
 #if DEBUG
 		builder.Logging.AddDebug();

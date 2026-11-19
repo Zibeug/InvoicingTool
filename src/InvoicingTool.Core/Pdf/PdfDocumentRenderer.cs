@@ -9,12 +9,12 @@ namespace InvoicingTool.Core.Pdf;
 /// <summary>Génère le PDF A4 d'un devis ou d'une facture, à envoyer ou imprimer.</summary>
 public static class PdfDocumentRenderer
 {
-    private static readonly Color Accent = new(0x2B, 0x57, 0x97);
     private static readonly Color Muted = new(0x55, 0x55, 0x55);
     private static readonly Color LineColor = new(0xDD, 0xDD, 0xDD);
 
-    public static byte[] Render(CommercialDocument doc, IReadOnlyList<DocumentLine> lines, CompanySettings company) =>
-        Render(PrintableDocument.Build(doc, lines, company));
+    public static byte[] Render(
+        CommercialDocument doc, IReadOnlyList<DocumentLine> lines, CompanySettings company, DocumentSignature? signature = null) =>
+        Render(PrintableDocument.Build(doc, lines, company, signature));
 
     public static byte[] Render(PrintableDocument p)
     {
@@ -23,7 +23,8 @@ public static class PdfDocumentRenderer
         var document = new Document();
         document.Info.Title = p.Heading;
         document.Info.Author = p.CompanyName;
-        DefineStyles(document);
+        var accent = ParseColor(p.AccentColor);
+        DefineStyles(document, accent);
 
         var section = document.AddSection();
         section.PageSetup = document.DefaultPageSetup.Clone();
@@ -61,8 +62,8 @@ public static class PdfDocumentRenderer
         if (p.Subject is not null)
             AddLabelled(section, "Objet : ", p.Subject);
 
-        AddLines(section, p, width);
-        AddTotals(section, p, width);
+        AddLines(section, p, width, accent);
+        AddTotals(section, p, width, accent);
 
         if (p.TaxExemptionMention is not null)
             section.AddParagraph(p.TaxExemptionMention, "Small");
@@ -72,7 +73,7 @@ public static class PdfDocumentRenderer
             notes.Format.SpaceBefore = Unit.FromPoint(10);
         }
         if (p.SignatureText is not null)
-            AddSignature(section, p.SignatureText, width);
+            AddSignature(section, p.SignatureText, p.Signature, width);
         if (p.PaidMention is not null)
         {
             var paid = section.AddParagraph(p.PaidMention);
@@ -99,7 +100,13 @@ public static class PdfDocumentRenderer
         return output.ToArray();
     }
 
-    private static void DefineStyles(Document document)
+    private static Color ParseColor(string hex)
+    {
+        var value = Convert.ToInt32(hex.TrimStart('#'), 16);
+        return new Color((byte)(value >> 16), (byte)(value >> 8), (byte)value);
+    }
+
+    private static void DefineStyles(Document document, Color accent)
     {
         var normal = document.Styles[StyleNames.Normal]!;
         normal.Font.Name = EmbeddedFontResolver.FamilyName;
@@ -108,7 +115,7 @@ public static class PdfDocumentRenderer
         var heading = document.Styles.AddStyle("Heading", StyleNames.Normal);
         heading.Font.Size = 16;
         heading.Font.Bold = true;
-        heading.Font.Color = Accent;
+        heading.Font.Color = accent;
         heading.ParagraphFormat.SpaceBefore = Unit.FromPoint(18);
         heading.ParagraphFormat.SpaceAfter = Unit.FromPoint(2);
 
@@ -125,6 +132,14 @@ public static class PdfDocumentRenderer
         table.AddColumn(width * 0.45);
         var row = table.AddRow();
 
+        if (p.Logo is not null)
+        {
+            var logoParagraph = row.Cells[0].AddParagraph();
+            logoParagraph.Format.SpaceAfter = Unit.FromPoint(6);
+            var logo = logoParagraph.AddImage(Base64(p.Logo));
+            logo.LockAspectRatio = true;
+            logo.Height = Unit.FromCentimeter(1.8);
+        }
         var company = row.Cells[0].AddParagraph();
         company.AddFormattedText(p.CompanyName, new Font { Bold = true, Size = 12 });
         foreach (var line in p.CompanyLines)
@@ -155,7 +170,7 @@ public static class PdfDocumentRenderer
         paragraph.Format.SpaceAfter = Unit.FromPoint(4);
     }
 
-    private static void AddLines(Section section, PrintableDocument p, Unit width)
+    private static void AddLines(Section section, PrintableDocument p, Unit width, Color accent)
     {
         // Colonnes : désignation | qté | unité | prix unitaire | (taxe) | total
         var fixedWidths = new List<(string Header, double Ratio, bool Right)>
@@ -177,7 +192,7 @@ public static class PdfDocumentRenderer
 
         var header = table.AddRow();
         header.HeadingFormat = true; // répété sur chaque page
-        header.Shading.Color = Accent;
+        header.Shading.Color = accent;
         header.Format.Font.Color = Colors.White;
         header.Format.Font.Bold = true;
         header.Cells[0].AddParagraph("Désignation");
@@ -198,7 +213,7 @@ public static class PdfDocumentRenderer
         }
     }
 
-    private static void AddTotals(Section section, PrintableDocument p, Unit width)
+    private static void AddTotals(Section section, PrintableDocument p, Unit width, Color accent)
     {
         var spacer = section.AddParagraph();
         spacer.Format.SpaceAfter = Unit.FromPoint(6);
@@ -219,13 +234,13 @@ public static class PdfDocumentRenderer
             {
                 row.Format.Font.Bold = true;
                 row.Format.Font.Size = 11;
-                row.Borders.Top.Color = Accent;
+                row.Borders.Top.Color = accent;
                 row.Borders.Top.Width = 1.5;
             }
         }
     }
 
-    private static void AddSignature(Section section, string text, Unit width)
+    private static void AddSignature(Section section, string text, PrintableSignature? signature, Unit width)
     {
         var paragraph = section.AddParagraph(text);
         paragraph.Format.SpaceBefore = Unit.FromPoint(18);
@@ -238,5 +253,19 @@ public static class PdfDocumentRenderer
         row.Height = Unit.FromCentimeter(3);
         row.Borders.Width = 0.75;
         row.Borders.Color = new Color(0x99, 0x99, 0x99);
+
+        if (signature is null)
+            return;
+        var cell = row.Cells[0];
+        cell.Format.Alignment = ParagraphAlignment.Center;
+        var image = cell.AddParagraph().AddImage(Base64(signature.Image));
+        image.LockAspectRatio = true;
+        image.Height = Unit.FromCentimeter(2.6);
+        var caption = section.AddParagraph(signature.Caption, "Small");
+        caption.Format.Alignment = ParagraphAlignment.Right;
+        caption.Format.SpaceBefore = Unit.FromPoint(3);
     }
+
+    /// <summary>Image intégrée directement au PDF (format « base64: » de MigraDoc), sans fichier temporaire.</summary>
+    private static string Base64(byte[] image) => "base64:" + Convert.ToBase64String(image);
 }

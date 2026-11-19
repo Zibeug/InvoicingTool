@@ -29,6 +29,26 @@ public sealed class DocumentStatusColorConverter : IValueConverter
 		throw new NotSupportedException();
 }
 
+/// <summary>Image enregistrée en base (logo) vers une source affichable.</summary>
+public sealed class BytesToImageSourceConverter : IValueConverter
+{
+	public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+		value is byte[] { Length: > 0 } bytes ? ImageSource.FromStream(() => new MemoryStream(bytes)) : null;
+
+	public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+		throw new NotSupportedException();
+}
+
+/// <summary>« #RRGGBB » vers une couleur (pastilles de choix de couleur).</summary>
+public sealed class HexToColorConverter : IValueConverter
+{
+	public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+		value is string hex && Color.TryParse(hex, out var color) ? color : Colors.Transparent;
+
+	public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+		throw new NotSupportedException();
+}
+
 public sealed class InvertedBoolConverter : IValueConverter
 {
 	public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) => value is not true;

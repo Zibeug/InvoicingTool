@@ -20,6 +20,7 @@ public sealed class BackupFile
     public List<CatalogItem> Catalog { get; set; } = [];
     public List<CommercialDocument> Documents { get; set; } = [];
     public List<DocumentLine> Lines { get; set; } = [];
+    public List<DocumentSignature> Signatures { get; set; } = [];
     public List<NumberSequence> Sequences { get; set; } = [];
 }
 
@@ -56,6 +57,7 @@ public class BackupService(AppDatabase database, SettingsRepository settings, Ti
             Catalog = await db.Table<CatalogItem>().ToListAsync().ConfigureAwait(false),
             Documents = await db.Table<CommercialDocument>().ToListAsync().ConfigureAwait(false),
             Lines = await db.Table<DocumentLine>().ToListAsync().ConfigureAwait(false),
+            Signatures = await db.Table<DocumentSignature>().ToListAsync().ConfigureAwait(false),
             Sequences = await db.Table<NumberSequence>().ToListAsync().ConfigureAwait(false),
         };
         var bytes = JsonSerializer.SerializeToUtf8Bytes(backup, JsonOptions);
@@ -109,6 +111,7 @@ public class BackupService(AppDatabase database, SettingsRepository settings, Ti
         var db = await database.GetConnectionAsync().ConfigureAwait(false);
         await db.RunInTransactionAsync(conn =>
         {
+            conn.DeleteAll<DocumentSignature>();
             conn.DeleteAll<DocumentLine>();
             conn.DeleteAll<CommercialDocument>();
             conn.DeleteAll<Client>();
@@ -120,6 +123,7 @@ public class BackupService(AppDatabase database, SettingsRepository settings, Ti
             conn.InsertAll(backup.Catalog);
             conn.InsertAll(backup.Documents);
             conn.InsertAll(backup.Lines);
+            conn.InsertAll(backup.Signatures);
             conn.InsertAll(backup.Sequences);
             conn.Insert(restoredSettings);
         }).ConfigureAwait(false);

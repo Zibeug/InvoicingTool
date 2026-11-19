@@ -10,6 +10,8 @@ public static class HtmlDocumentRenderer
     public static string Render(CommercialDocument doc, IReadOnlyList<DocumentLine> lines, CompanySettings company) =>
         Render(PrintableDocument.Build(doc, lines, company));
 
+    private const string DefaultAccent = "#2b5797";
+
     public static string Render(PrintableDocument p)
     {
         var sb = new StringBuilder();
@@ -17,13 +19,17 @@ public static class HtmlDocumentRenderer
         sb.Append("<!DOCTYPE html><html lang=\"fr\"><head><meta charset=\"utf-8\">")
           .Append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">")
           .Append("<title>").Append(E(p.Heading)).Append("</title>")
-          .Append("<style>").Append(Css).Append("</style></head><body>");
+          // La couleur est validée (#RRGGBB) par PrintableDocument : pas d'injection possible dans le CSS.
+          .Append("<style>").Append(Css.Replace(DefaultAccent, p.AccentColor)).Append("</style></head><body>");
 
         if (p.Banner is not null)
             sb.Append("<div class=\"draft\">").Append(E(p.Banner)).Append("</div>");
 
         // En-tête : émetteur et client
-        sb.Append("<header><div class=\"party\"><strong>").Append(E(p.CompanyName)).Append("</strong>");
+        sb.Append("<header><div class=\"party\">");
+        if (p.Logo is not null)
+            sb.Append("<img class=\"logo\" alt=\"\" src=\"").Append(ImageData.ToDataUri(p.Logo)).Append("\"><br>");
+        sb.Append("<strong>").Append(E(p.CompanyName)).Append("</strong>");
         foreach (var line in p.CompanyLines)
             sb.Append("<br>").Append(E(line));
         sb.Append("</div><div class=\"party client\"><span class=\"label\">Client</span><strong>")
@@ -67,7 +73,15 @@ public static class HtmlDocumentRenderer
         if (p.Notes is not null)
             sb.Append("<p class=\"notes\">").Append(E(p.Notes).Replace("\n", "<br>")).Append("</p>");
         if (p.SignatureText is not null)
-            sb.Append("<div class=\"sign\"><p>").Append(E(p.SignatureText)).Append("</p><div class=\"box\"></div></div>");
+        {
+            sb.Append("<div class=\"sign\"><p>").Append(E(p.SignatureText)).Append("</p><div class=\"box\">");
+            if (p.Signature is not null)
+                sb.Append("<img alt=\"Signature\" src=\"").Append(ImageData.ToDataUri(p.Signature.Image)).Append("\">");
+            sb.Append("</div>");
+            if (p.Signature is not null)
+                sb.Append("<p class=\"small signed\">").Append(E(p.Signature.Caption)).Append("</p>");
+            sb.Append("</div>");
+        }
         if (p.PaidMention is not null)
             sb.Append("<p class=\"paid\">").Append(E(p.PaidMention)).Append("</p>");
         foreach (var text in p.FinePrint)
@@ -80,6 +94,9 @@ public static class HtmlDocumentRenderer
     private static string E(string? text) => WebUtility.HtmlEncode(text ?? string.Empty);
 
     private const string Css = """
+        h1{color:#2b5797}
+        .logo{max-height:70px;max-width:200px;margin-bottom:6px}
+        .box img{max-width:100%;max-height:88px;display:block;margin:auto}.signed{text-align:right}
         body{font-family:-apple-system,Roboto,"Segoe UI",Arial,sans-serif;color:#222;margin:16px;font-size:14px}
         header{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
         .party{line-height:1.4}.client{text-align:right}.label{display:block;color:#777;font-size:12px}

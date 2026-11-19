@@ -114,7 +114,7 @@ public class BackupAndTermsTests
 
         await using var target = new TestDatabase();
         var dialogs = new FakeDialogs { ConfirmResult = false };
-        var vm = new SettingsViewModel(target.Settings, target.Backup, new FakeShare(), picker, new FakeNavigation(), dialogs);
+        var vm = target.CreateSettingsViewModel(dialogs, filePicker: picker);
         await vm.OnAppearingAsync();
 
         await vm.RestoreBackupCommand.ExecuteAsync(null);
@@ -132,7 +132,7 @@ public class BackupAndTermsTests
         await using var t = new TestDatabase();
         await SeedAsync(t);
         var share = new FakeShare();
-        var vm = new SettingsViewModel(t.Settings, t.Backup, share, new FakeFilePicker(), new FakeNavigation(), new FakeDialogs());
+        var vm = t.CreateSettingsViewModel(share: share);
 
         await vm.ExportBackupCommand.ExecuteAsync(null);
 
@@ -147,7 +147,7 @@ public class BackupAndTermsTests
     {
         await using var t = new TestDatabase();
         await SeedAsync(t);
-        var vm = new SettingsViewModel(t.Settings, t.Backup, new FakeShare(), new FakeFilePicker(), new FakeNavigation(), new FakeDialogs());
+        var vm = t.CreateSettingsViewModel();
         await vm.OnAppearingAsync();
 
         await vm.ExportBackupCommand.ExecuteAsync(null);

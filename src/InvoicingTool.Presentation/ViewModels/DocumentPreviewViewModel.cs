@@ -37,7 +37,8 @@ public partial class DocumentPreviewViewModel(
         var lines = await service.GetLinesAsync(document.Id);
         var company = await settings.GetSettingsAsync();
 
-        _printable = PrintableDocument.Build(document, lines, company);
+        var signature = await documents.GetSignatureAsync(document.Id);
+        _printable = PrintableDocument.Build(document, lines, company, signature);
         Title = $"{DisplayText.Type(document.Type)} {document.DisplayNumber}";
         Html = HtmlDocumentRenderer.Render(_printable);
     }

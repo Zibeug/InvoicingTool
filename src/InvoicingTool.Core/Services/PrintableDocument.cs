@@ -6,6 +6,9 @@ public sealed record PrintableLine(string Description, string Quantity, string U
 
 public sealed record PrintableTotal(string Label, string Value, bool IsGrandTotal = false);
 
+/// <summary>Signature du client, avec la légende « Signé le … par … ».</summary>
+public sealed record PrintableSignature(byte[] Image, string Caption);
+
 /// <summary>
 /// Contenu d'un devis ou d'une facture, déjà formaté selon le pays et la devise.
 /// Partagé par le rendu HTML (aperçu à l'écran) et le rendu PDF, qui affichent ainsi la même chose.
@@ -15,6 +18,9 @@ public sealed record PrintableTotal(string Label, string Value, bool IsGrandTota
 public sealed record PrintableDocument
 {
     public required string Heading { get; init; }
+    /// <summary>Couleur des titres et de l'en-tête du tableau (« #RRGGBB »).</summary>
+    public required string AccentColor { get; init; }
+    public byte[]? Logo { get; init; }
     public string? Banner { get; init; }
     public required string CompanyName { get; init; }
     public required IReadOnlyList<string> CompanyLines { get; init; }
@@ -34,9 +40,11 @@ public sealed record PrintableDocument
     /// <summary>Petits caractères en bas de document : règlement, conditions de paiement.</summary>
     public required IReadOnlyList<string> FinePrint { get; init; }
     public string? SignatureText { get; init; }
+    public PrintableSignature? Signature { get; init; }
     public required string FileNameWithoutExtension { get; init; }
 
-    public static PrintableDocument Build(CommercialDocument doc, IReadOnlyList<DocumentLine> lines, CompanySettings company)
+    public static PrintableDocument Build(
+        CommercialDocument doc, IReadOnlyList<DocumentLine> lines, CompanySettings company, DocumentSignature? signature = null)
     {
         var fmt = MoneyFormatter.For(doc);
         var profile = CountryProfiles.Get(doc.CountryCode);
@@ -81,7 +89,10 @@ public sealed record PrintableDocument
         if (!isQuote)
         {
             if (!string.IsNullOrWhiteSpace(company.Iban))
-                finePrint.Add($"Règlement par virement — IBAN : {company.Iban}");
+            {
+                var holder = string.IsNullOrWhiteSpace(company.CompanyName) ? "" : $" — titulaire : {company.CompanyName}";
+                finePrint.Add($"Règlement par virement — IBAN : {Iban.Format(company.Iban)}{holder}");
+            }
             if (!string.IsNullOrWhiteSpace(company.PaymentTerms))
                 finePrint.Add(company.PaymentTerms);
         }
@@ -89,6 +100,8 @@ public sealed record PrintableDocument
         return new PrintableDocument
         {
             Heading = $"{title} n° {doc.DisplayNumber}",
+            AccentColor = ImageData.NormalizeColor(company.AccentColor, CompanySettings.DefaultAccentColor),
+            Logo = ImageData.IsSupported(company.Logo) ? company.Logo : null,
             Banner = doc.Status switch
             {
                 DocumentStatus.Draft => "BROUILLON — document non émis",
@@ -115,6 +128,11 @@ public sealed record PrintableDocument
                 : null,
             FinePrint = finePrint,
             SignatureText = isQuote ? profile.QuoteAcceptanceText : null,
+            Signature = isQuote && signature is not null && ImageData.IsSupported(signature.Image)
+                ? new PrintableSignature(signature.Image,
+                    $"Signé le {fmt.Date(signature.SignedAt.ToLocalTime())} à {signature.SignedAt.ToLocalTime():HH:mm}" +
+                    (string.IsNullOrWhiteSpace(signature.SignerName) ? "" : $" par {signature.SignerName}"))
+                : null,
             FileNameWithoutExtension = FileName($"{(isQuote ? "Devis" : "Facture")}_{doc.Number ?? "brouillon"}_{doc.ClientName}"),
         };
     }

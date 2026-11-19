@@ -14,8 +14,14 @@ Tout fonctionne **hors ligne** : les données sont stockées dans une base **SQL
   - brouillon modifiable puis **émission** avec un numéro définitif continu par année (`D-2026-0001`, `F-2026-0001`) ;
     un document émis n'est plus modifiable (une facture s'annule, elle ne se supprime pas) ;
   - statuts (envoyé, accepté, refusé, à payer, payée, annulée), **devis → facture** en un geste, duplication ;
+  - **signature du devis au doigt** sur l'écran du téléphone : la signature, le nom du signataire, la date et l'heure
+    sont imprimés dans le cadre « Bon pour accord » et le devis passe en « accepté » ;
+  - **numéro de départ** au choix (ex. continuer à `F-2026-0250` après un ancien logiciel), sans risque de doublon ;
   - sauvegarde automatique en quittant l'écran.
 - **PDF** : aperçu à l'écran, ouverture dans le lecteur du téléphone ou envoi par e-mail, SMS, WhatsApp…
+- **Personnalisation** : logo de l'entreprise (réduit automatiquement, transparence conservée) et couleur des titres
+  et du tableau (10 couleurs proposées ou code `#RRGGBB`).
+- **IBAN** imprimé sur les factures avec le titulaire, vérifié (clé de contrôle) et mis en forme par groupes de 4.
 - **Pays et devises** : France, Suisse, Belgique, Luxembourg ou autre ; devise au choix (EUR, CHF, USD, CAD, GBP, FCFA…).
 - **TVA facultative** : si l'entreprise **n'est pas assujettie**, tout ce qui concerne la TVA disparaît de l'application
   et des documents (pas de taux, pas de « HT » / « TTC », un seul total). Une mention légale peut être imprimée,
@@ -51,7 +57,8 @@ src/
                                PrintableDocument + HtmlDocumentRenderer, BackupService (export / restauration)
     Pdf/                       PdfDocumentRenderer (PDFsharp/MigraDoc, licence MIT, 100 % .NET) + polices OpenSans
   InvoicingTool.Presentation/  ViewModels MVVM (CommunityToolkit.Mvvm) — net10.0, testables sans téléphone
-  InvoicingTool.App/           Application .NET MAUI : pages XAML, navigation Shell, services natifs
+  InvoicingTool.App/           Application .NET MAUI : pages XAML, navigation Shell, services natifs,
+                               signature avec DrawingView (CommunityToolkit.Maui)
 tests/
   InvoicingTool.Tests/         Tests xUnit du cœur métier et des ViewModels
 ```
@@ -59,7 +66,7 @@ tests/
 ### Fichier de sauvegarde
 
 JSON lisible (`format: "InvoicingTool.Backup"`, `version: 1`) contenant les paramètres, clients, articles, documents,
-lignes et compteurs de numérotation. La restauration vérifie le fichier avant de toucher aux données, puis remplace
+lignes, signatures, logo et compteurs de numérotation. La restauration vérifie le fichier avant de toucher aux données, puis remplace
 tout en une seule transaction (en cas d'erreur, rien n'est modifié). La numérotation continue donc sans doublon.
 
 ### Préparé pour la synchronisation
@@ -89,4 +96,3 @@ dotnet build src/InvoicingTool.App -t:Run -f net10.0-ios           # iOS (sur un
 
 - QR-facture suisse en bas des factures en CHF.
 - Sauvegarde automatique vers un dossier cloud choisi par l'utilisateur, puis synchronisation entre appareils.
-- Signature du client au doigt sur le devis.

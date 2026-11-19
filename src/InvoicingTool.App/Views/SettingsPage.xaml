@@ -53,8 +53,41 @@
             <Entry Text="{Binding Email}" Keyboard="Email" />
             <Label Text="{Binding CompanyIdLabel}" Style="{StaticResource FieldLabel}" />
             <Entry Text="{Binding CompanyId}" Placeholder="{Binding CompanyIdExample}" />
-            <Label Text="IBAN (imprimé sur les factures)" Style="{StaticResource FieldLabel}" />
-            <Entry Text="{Binding Iban}" />
+            <Label Text="IBAN (imprimé sur les factures pour le paiement par virement)" Style="{StaticResource FieldLabel}" />
+            <Entry Text="{Binding Iban}" Placeholder="CH93 0076 2011 6238 5295 7" Keyboard="Text" />
+
+            <Label Text="Apparence des documents" Style="{StaticResource SectionTitle}" />
+            <Label Text="Logo (facultatif)" Style="{StaticResource FieldLabel}" />
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                <Border Style="{StaticResource Card}" Padding="4" WidthRequest="90" HeightRequest="90" IsVisible="{Binding HasLogo}">
+                    <Image Source="{Binding Logo, Converter={StaticResource BytesToImage}}" Aspect="AspectFit" />
+                </Border>
+                <VerticalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">
+                    <Button Text="Choisir un logo" Command="{Binding PickLogoCommand}" Style="{StaticResource OutlineButton}" />
+                    <Button Text="Retirer le logo" Command="{Binding RemoveLogoCommand}" IsVisible="{Binding HasLogo}"
+                            Style="{StaticResource DangerButton}" />
+                </VerticalStackLayout>
+            </Grid>
+            <Label Text="Couleur des titres et du tableau" Style="{StaticResource FieldLabel}" />
+            <CollectionView ItemsSource="{Binding AccentColors}" ItemsLayout="HorizontalList" HeightRequest="52">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="x:String">
+                        <Border WidthRequest="40" HeightRequest="40" Margin="0,0,8,0" StrokeShape="RoundRectangle 20" StrokeThickness="0"
+                                BackgroundColor="{Binding ., Converter={StaticResource HexToColor}}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding SelectColorCommand, Source={RelativeSource AncestorType={x:Type vm:SettingsViewModel}}, x:DataType=vm:SettingsViewModel}"
+                                    CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                <BoxView WidthRequest="28" HeightRequest="28" CornerRadius="14" VerticalOptions="Center"
+                         Color="{Binding AccentColor, Converter={StaticResource HexToColor}}" />
+                <Entry Grid.Column="1" Text="{Binding AccentColor}" Placeholder="#2B5797" />
+            </Grid>
 
             <Label Text="Pays et devise" Style="{StaticResource SectionTitle}" />
             <Label Text="Pays" Style="{StaticResource FieldLabel}" />
@@ -108,6 +141,19 @@
                 <VerticalStackLayout Grid.Column="1">
                     <Label Text="Préfixe des factures" Style="{StaticResource FieldLabel}" />
                     <Entry Text="{Binding InvoicePrefix}" />
+                </VerticalStackLayout>
+            </Grid>
+            <Label Text="Numérotation de l'année en cours (ex. pour continuer celle d'un ancien logiciel)" Style="{StaticResource FieldLabel}" />
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                <VerticalStackLayout>
+                    <Label Text="Prochain n° de devis" Style="{StaticResource FieldLabel}" />
+                    <Entry Text="{Binding NextQuoteNumberText}" Keyboard="Numeric" />
+                    <Label Text="{Binding NextQuotePreview}" Style="{StaticResource Secondary}" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1">
+                    <Label Text="Prochain n° de facture" Style="{StaticResource FieldLabel}" />
+                    <Entry Text="{Binding NextInvoiceNumberText}" Keyboard="Numeric" />
+                    <Label Text="{Binding NextInvoicePreview}" Style="{StaticResource Secondary}" />
                 </VerticalStackLayout>
             </Grid>
             <Label Text="Conditions de paiement (bas des factures)" Style="{StaticResource FieldLabel}" />

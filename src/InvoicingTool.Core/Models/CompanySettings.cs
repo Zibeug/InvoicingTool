@@ -18,7 +18,16 @@ public class CompanySettings : EntityBase
     public string? CompanyId { get; set; }
     public string? VatNumber { get; set; }
 
+    /// <summary>IBAN imprimé sur les factures, enregistré sans espaces (ex. « CH9300762011623852957 »).</summary>
     public string? Iban { get; set; }
+
+    /// <summary>Logo de l'entreprise (PNG ou JPEG, déjà réduit), imprimé en haut des documents.</summary>
+    public byte[]? Logo { get; set; }
+
+    /// <summary>Couleur des titres et du tableau sur les documents (« #RRGGBB »).</summary>
+    public string AccentColor { get; set; } = DefaultAccentColor;
+
+    public const string DefaultAccentColor = "#2B5797";
 
     /// <summary>Code du pays (<see cref="CountryProfiles"/>) qui détermine les règles de TVA et les mentions.</summary>
     public string CountryCode { get; set; } = CountryProfiles.France.Code;

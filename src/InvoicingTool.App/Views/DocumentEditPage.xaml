@@ -16,10 +16,12 @@
 
             <!-- En-tête -->
             <Border Style="{StaticResource Card}">
-                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
                     <Label Text="{Binding ClientName}" FontFamily="OpenSansSemibold" FontSize="18" />
                     <Label Grid.Column="1" Text="{Binding StatusLabel}" FontFamily="OpenSansSemibold" />
                     <Label Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding Number, StringFormat='N° {0}'}" Style="{StaticResource Secondary}" />
+                    <Label Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding SignatureLabel}" TextColor="#2E7D32" FontSize="13"
+                           IsVisible="{Binding HasSignature}" />
                 </Grid>
             </Border>
 
@@ -121,6 +123,7 @@
 
             <!-- Actions document émis -->
             <VerticalStackLayout IsVisible="{Binding IsEditable, Converter={StaticResource Not}}" Spacing="8" Margin="0,12,0,0">
+                <Button Text="Faire signer le client" Command="{Binding SignCommand}" IsVisible="{Binding CanSign}" />
                 <Button Text="Aperçu et PDF" Command="{Binding PreviewCommand}" />
                 <Button Text="Changer le statut" Command="{Binding ChangeStatusCommand}" IsVisible="{Binding CanChangeStatus}"
                         Style="{StaticResource OutlineButton}" />

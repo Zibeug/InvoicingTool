@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using InvoicingTool.Core.Data;
 using InvoicingTool.Core.Models;
 using SQLite;
@@ -201,9 +202,84 @@ public class DocumentService(
         await documents.DeleteAsync(document).ConfigureAwait(false);
     }
 
+    /// <summary>Enregistre la signature du client sur un devis émis ; le devis passe en « accepté ».</summary>
+    public async Task SignQuoteAsync(CommercialDocument quote, byte[] signaturePng, string signerName)
+    {
+        if (quote.Type != DocumentType.Quote)
+            throw new InvalidOperationException("Seul un devis peut être signé.");
+        if (quote.Status is not (DocumentStatus.Issued or DocumentStatus.Accepted))
+            throw new InvalidOperationException("Émettez le devis avant de le faire signer.");
+        if (!ImageData.IsSupported(signaturePng))
+            throw new InvalidOperationException("La signature est vide.");
+        if (await documents.GetSignatureAsync(quote.Id).ConfigureAwait(false) is not null)
+            throw new InvalidOperationException("Ce devis est déjà signé.");
+
+        var now = clock.GetUtcNow().UtcDateTime;
+        var signature = new DocumentSignature
+        {
+            DocumentId = quote.Id,
+            Image = signaturePng,
+            SignerName = signerName.Trim(),
+            SignedAt = now,
+        };
+        var db = await database.GetConnectionAsync().ConfigureAwait(false);
+        await db.RunInTransactionAsync(conn =>
+        {
+            Stamp(signature, now);
+            conn.Insert(signature);
+            quote.Status = DocumentStatus.Accepted;
+            Stamp(quote, now);
+            conn.InsertOrReplace(quote);
+        }).ConfigureAwait(false);
+    }
+
+    /// <summary>Prochain numéro qui sera attribué (ex. 1 pour « F-2026-0001 »).</summary>
+    public async Task<int> GetNextNumberAsync(DocumentType type, int year)
+    {
+        var db = await database.GetConnectionAsync().ConfigureAwait(false);
+        var sequence = await db.FindAsync<NumberSequence>(SequenceKey(type, year)).ConfigureAwait(false);
+        return (sequence?.LastValue ?? 0) + 1;
+    }
+
+    /// <summary>
+    /// Choisit le numéro de départ (par exemple pour continuer la numérotation d'un ancien logiciel).
+    /// Refusé s'il créerait un doublon avec un document déjà émis cette année.
+    /// </summary>
+    public async Task SetNextNumberAsync(DocumentType type, int year, int next)
+    {
+        if (next < 1)
+            throw new InvalidOperationException("Le numéro doit être supérieur ou égal à 1.");
+
+        var db = await database.GetConnectionAsync().ConfigureAwait(false);
+        var issued = await db.Table<CommercialDocument>()
+            .Where(d => d.Type == type && d.Number != null)
+            .ToListAsync().ConfigureAwait(false);
+        var highest = issued
+            .Where(d => d.IssueDate.Year == year)
+            .Select(d => SequenceNumber(d.Number!))
+            .DefaultIfEmpty(0)
+            .Max();
+        if (next <= highest)
+        {
+            var kind = type == DocumentType.Quote ? "devis" : "facture";
+            throw new InvalidOperationException(
+                $"Le numéro {next} est déjà utilisé : la dernière {kind} émise en {year} porte le n° {highest}. Choisissez au moins {highest + 1}.");
+        }
+
+        await db.InsertOrReplaceAsync(new NumberSequence { Key = SequenceKey(type, year), LastValue = next - 1 }).ConfigureAwait(false);
+    }
+
+    private static int SequenceNumber(string number)
+    {
+        var match = Regex.Match(number, @"(\d+)$");
+        return match.Success && int.TryParse(match.Value, out var value) ? value : 0;
+    }
+
+    private static string SequenceKey(DocumentType type, int year) => $"{type}-{year}";
+
     private static int NextSequenceValue(SQLiteConnection conn, DocumentType type, int year)
     {
-        var key = $"{type}-{year}";
+        var key = SequenceKey(type, year);
         var sequence = conn.Find<NumberSequence>(key) ?? new NumberSequence { Key = key };
         sequence.LastValue++;
         conn.InsertOrReplace(sequence);

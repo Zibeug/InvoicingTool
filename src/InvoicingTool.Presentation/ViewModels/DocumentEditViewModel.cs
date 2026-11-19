@@ -53,6 +53,12 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
     [ObservableProperty] private bool _isQuote;
     [ObservableProperty] private bool _canConvertToInvoice;
     [ObservableProperty] private bool _canChangeStatus;
+    [ObservableProperty] private bool _canSign;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSignature))]
+    private string? _signatureLabel;
+
+    public bool HasSignature => SignatureLabel is not null;
     [ObservableProperty] private bool _showVat = true;
 
     [ObservableProperty] private string _totalExclTaxDisplay = string.Empty;
@@ -94,6 +100,11 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
         IssueDate = document.IssueDate;
         DueDate = document.DueDate ?? document.IssueDate;
         Notes = document.Notes;
+
+        var signature = await _documents.GetSignatureAsync(document.Id);
+        SignatureLabel = signature is null
+            ? null
+            : $"Signé par {signature.SignerName} le {_money.Date(signature.SignedAt.ToLocalTime())} à {signature.SignedAt.ToLocalTime():HH:mm}";
 
         foreach (var line in Lines)
             line.AmountChanged -= OnLineAmountChanged;
@@ -213,6 +224,11 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
         RefreshState();
     });
 
+    /// <summary>Le client signe le devis au doigt, directement sur l'écran.</summary>
+    [RelayCommand]
+    private Task SignAsync() => _navigation.GoToAsync(Routes.Signature,
+        new Dictionary<string, object> { [Routes.IdParameter] = _document.Id });
+
     [RelayCommand]
     private Task ConvertToInvoiceAsync() => RunAsync(async () =>
     {
@@ -290,6 +306,7 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
         IsEditable = _document.IsEditable;
         CanConvertToInvoice = IsQuote && _document.Status is DocumentStatus.Issued or DocumentStatus.Accepted;
         CanChangeStatus = Enum.GetValues<DocumentStatus>().Any(s => DocumentService.CanChangeStatus(_document, s));
+        CanSign = IsQuote && SignatureLabel is null && _document.Status is DocumentStatus.Issued or DocumentStatus.Accepted;
         var profile = CountryProfiles.Get(_document.CountryCode);
         ShowVat = !_document.VatExempt;
         TaxName = profile.TaxName;
