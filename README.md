@@ -1,6 +1,6 @@
-# Devis & Factures — application mobile simple pour micro-entreprises
+# Devis & Factures — application simple pour micro-entreprises
 
-Application téléphone (Android / iOS) en **C# / .NET MAUI** pour faire ses **devis** et ses **factures** en quelques
+Application **téléphone (Android / iOS) et ordinateur Windows** en **C# / .NET MAUI** pour faire ses **devis** et ses **factures** en quelques
 minutes, quel que soit le métier : indépendants, consultants, coachs, créatifs, commerçants, services à domicile…
 Tout fonctionne **hors ligne** : les données sont stockées dans une base **SQLite locale** sur le téléphone.
 
@@ -96,7 +96,31 @@ ou Visual Studio / Rider avec le support MAUI.
 dotnet test tests/InvoicingTool.Tests                              # tests (toutes plateformes)
 dotnet build src/InvoicingTool.App -t:Run -f net10.0-android       # téléphone / émulateur Android
 dotnet build src/InvoicingTool.App -t:Run -f net10.0-ios           # iOS (sur un Mac avec Xcode)
+dotnet build src/InvoicingTool.App -t:Run -f net10.0-windows10.0.19041.0  # Windows (sur un PC Windows)
 ```
+
+## Windows
+
+L'application fonctionne aussi sur un PC **Windows 10 (version 1809) ou Windows 11**, en application classique
+(`InvoicingTool.App.exe`, sans Microsoft Store ni installation).
+
+- **Version prête à l'emploi** : dans l'onglet *Actions* du dépôt GitHub, ouvrir la dernière exécution réussie du
+  workflow *Tests*, télécharger l'artefact `DevisFactures-windows-x64`, le décompresser et lancer `InvoicingTool.App.exe`.
+  Tout le nécessaire est inclus (.NET et Windows App SDK).
+- **Depuis les sources** : Visual Studio 2026 avec la charge de travail *.NET MAUI*, choisir la cible *Windows Machine* ;
+  ou en ligne de commande :
+
+  ```bash
+  dotnet build src/InvoicingTool.App -t:Run -f net10.0-windows10.0.19041.0
+  ```
+
+Différences avec le téléphone :
+- « Envoyer le PDF » et « Exporter » la sauvegarde ouvrent une boîte **Enregistrer sous** (au lieu du partage) ;
+- la signature se fait à la souris, au stylet ou au doigt sur un écran tactile ;
+- la dictée utilise la reconnaissance vocale de Windows : installer la voix française dans
+  *Paramètres > Heure et langue > Voix* si nécessaire ;
+- les données sont stockées dans le dossier de l'utilisateur (`%LOCALAPPDATA%`). Elles sont **propres à chaque appareil** :
+  pour passer du téléphone au PC, exporter une sauvegarde sur l'un et la restaurer sur l'autre.
 
 ## Pistes pour la suite
 

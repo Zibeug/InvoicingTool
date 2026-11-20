@@ -8,6 +8,7 @@ public sealed class FilePickerService : IFilePickerService
 	{
 		[DevicePlatform.Android] = ["application/json", "application/octet-stream", "text/plain"],
 		[DevicePlatform.iOS] = ["public.json", "public.text"],
+		[DevicePlatform.WinUI] = [".json"],
 	});
 
 	public async Task<Stream?> PickBackupFileAsync()
