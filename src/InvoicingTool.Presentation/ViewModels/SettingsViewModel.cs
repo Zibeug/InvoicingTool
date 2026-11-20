@@ -8,6 +8,9 @@ using InvoicingTool.Presentation.Abstractions;
 
 namespace InvoicingTool.Presentation.ViewModels;
 
+/// <summary>Choix de thème proposé dans les paramètres.</summary>
+public sealed record ThemeOption(ThemeChoice Choice, string Name);
+
 /// <summary>Informations de l'entreprise, pays et devise, TVA, sauvegarde des données et conditions d'utilisation.</summary>
 public partial class SettingsViewModel : ViewModelBase
 {
@@ -21,6 +24,7 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly IImagePickerService _imagePicker;
     private readonly DocumentService _documents;
     private readonly AccountingExportService _export;
+    private readonly IThemeService _theme;
     private readonly TimeProvider _clock;
     private CompanySettings _company = new();
     private int _loadedNextQuote;
@@ -35,12 +39,15 @@ public partial class SettingsViewModel : ViewModelBase
         IImagePickerService imagePicker,
         DocumentService documents,
         AccountingExportService export,
+        IThemeService theme,
         INavigationService navigation,
         TimeProvider clock,
         IDialogService dialogs) : base(dialogs)
     {
         _imagePicker = imagePicker;
         _export = export;
+        _theme = theme;
+        _selectedTheme = ThemeOptions.First(o => o.Choice == theme.Current);
         _documents = documents;
         _clock = clock;
         _settings = settings;
@@ -52,6 +59,18 @@ public partial class SettingsViewModel : ViewModelBase
     }
 
     public IReadOnlyList<CountryProfile> Countries => CountryProfiles.All;
+
+    /// <summary>Thème de l'application : appliqué tout de suite, sans attendre « Enregistrer ».</summary>
+    public IReadOnlyList<ThemeOption> ThemeOptions { get; } =
+    [
+        new(ThemeChoice.System, "Automatique (comme l'appareil)"),
+        new(ThemeChoice.Light, "Clair"),
+        new(ThemeChoice.Dark, "Sombre"),
+    ];
+
+    [ObservableProperty] private ThemeOption _selectedTheme;
+
+    partial void OnSelectedThemeChanged(ThemeOption value) => _theme.Apply(value.Choice);
     public IReadOnlyList<Currency> CurrencyList => Currencies.All;
 
     /// <summary>Couleurs proposées pour les documents ; une couleur libre (#RRGGBB) peut aussi être saisie.</summary>

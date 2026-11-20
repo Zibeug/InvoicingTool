@@ -17,16 +17,39 @@ public sealed class DocumentStatusTextConverter : IValueConverter
 public sealed class DocumentStatusColorConverter : IValueConverter
 {
 	public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
-		value is not CommercialDocument doc ? Colors.Gray : DisplayText.IsOverdue(doc, DateTime.Today) ? Color.FromArgb("#C62828") : doc.Status switch
+		value is not CommercialDocument doc ? Colors.Gray
+		: DisplayText.IsOverdue(doc, DateTime.Today) ? ThemeColors.Get("Danger")
+		: doc.Status switch
 		{
-			DocumentStatus.Draft => Color.FromArgb("#8A8A8A"),
-			DocumentStatus.Issued => Color.FromArgb("#E08A00"),
-			DocumentStatus.Accepted or DocumentStatus.Paid => Color.FromArgb("#2E7D32"),
-			_ => Color.FromArgb("#C62828"),
+			DocumentStatus.Draft => Colors.Gray,
+			DocumentStatus.Issued => ThemeColors.Get("Warning"),
+			DocumentStatus.Accepted or DocumentStatus.Paid => ThemeColors.Get("Success"),
+			_ => ThemeColors.Get("Danger"),
 		};
 
 	public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
 		throw new NotSupportedException();
+}
+
+/// <summary>Ton d'un état (« Success », « Warning », « Danger ») vers sa couleur dans le thème actif.</summary>
+public sealed class ToneToColorConverter : IValueConverter
+{
+	public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+		value is string tone ? ThemeColors.Get(tone) : Colors.Gray;
+
+	public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+		throw new NotSupportedException();
+}
+
+/// <summary>Couleurs d'état de Colors.xaml, en version sombre quand l'application est en mode sombre.</summary>
+internal static class ThemeColors
+{
+	public static Color Get(string name)
+	{
+		var app = Application.Current;
+		var key = app?.RequestedTheme == AppTheme.Dark ? name + "Dark" : name;
+		return app?.Resources.TryGetValue(key, out var value) == true && value is Color color ? color : Colors.Gray;
+	}
 }
 
 /// <summary>Image enregistrée en base (logo) vers une source affichable.</summary>

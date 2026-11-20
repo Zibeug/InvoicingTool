@@ -49,6 +49,8 @@ public static class MauiProgram
 		services.AddSingleton<INavigationService, ShellNavigationService>();
 		services.AddSingleton<IDialogService, DialogService>();
 		services.AddSingleton<IShareService, ShareService>();
+		services.AddSingleton<ThemeService>();
+		services.AddSingleton<IThemeService>(sp => sp.GetRequiredService<ThemeService>());
 		services.AddSingleton<IFilePickerService, FilePickerService>();
 		services.AddSingleton<IImagePickerService, ImagePickerService>();
 		services.AddTransient<ISpeechRecognizer, SpeechRecognizer>();

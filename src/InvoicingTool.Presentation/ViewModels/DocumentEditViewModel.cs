@@ -55,6 +55,9 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
     [ObservableProperty] private bool _canRemind;
     [ObservableProperty] private string _remindButtonText = "Envoyer un rappel";
     [ObservableProperty] private bool _hasReminders;
+    [ObservableProperty] private bool _canMarkPaid;
+    [ObservableProperty] private bool _canUndoPayment;
+    [ObservableProperty] private DateTime _paymentDate = DateTime.Today;
 
     [ObservableProperty] private string? _subject;
     [ObservableProperty] private DateTime _issueDate = DateTime.Today;
@@ -242,6 +245,27 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
         await RefreshRemindersAsync();
     });
 
+    /// <summary>Enregistre le paiement à la date choisie (aujourd'hui par défaut).</summary>
+    [RelayCommand]
+    private Task MarkPaidAsync() => RunAsync(async () =>
+    {
+        await _service.MarkPaidAsync(_document, PaymentDate);
+        RefreshState();
+        await RefreshRemindersAsync();
+    });
+
+    /// <summary>Annule un paiement enregistré par erreur : la facture redevient « à payer ».</summary>
+    [RelayCommand]
+    private Task UndoPaymentAsync() => RunAsync(async () =>
+    {
+        if (!await Dialogs.ConfirmAsync("Paiement", "Annuler le paiement enregistré ? La facture redeviendra « à payer ».",
+                "Annuler le paiement", "Garder"))
+            return;
+        await _service.SetStatusAsync(_document, DocumentStatus.Issued);
+        RefreshState();
+        await RefreshRemindersAsync();
+    });
+
     /// <summary>Crée le rappel suivant (avec frais et nouveau délai) et ouvre son PDF pour l'envoyer.</summary>
     [RelayCommand]
     private Task RemindAsync() => RunAsync(async () =>
@@ -263,9 +287,14 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
     private async Task RefreshRemindersAsync()
     {
         Reminders.Clear();
+        CanMarkPaid = _document.Type == DocumentType.Invoice && _document.Status == DocumentStatus.Issued;
+        CanUndoPayment = _document.Type == DocumentType.Invoice && _document.Status == DocumentStatus.Paid;
+        PaymentDate = DateTime.Today;
         if (_document.Type != DocumentType.Invoice || _document.IsEditable)
         {
-            PaymentInfo = null;
+            PaymentInfo = _document.Type == DocumentType.Invoice
+                ? "Brouillon : émettez la facture pour pouvoir enregistrer son paiement."
+                : null;
             IsOverdue = CanRemind = HasReminders = false;
             return;
         }

@@ -130,6 +130,24 @@ public class DocumentService(
         await documents.SaveAsync(document).ConfigureAwait(false);
     }
 
+    /// <summary>Enregistre le paiement d'une facture émise, à la date où il a été reçu.</summary>
+    public async Task MarkPaidAsync(CommercialDocument invoice, DateTime paidDate)
+    {
+        if (invoice.Type != DocumentType.Invoice || invoice.Status != DocumentStatus.Issued)
+            throw new InvalidOperationException(invoice.Status == DocumentStatus.Draft
+                ? "Émettez d'abord la facture : un brouillon ne peut pas être payé."
+                : "Seule une facture émise et impayée peut être marquée comme payée.");
+        var date = paidDate.Date;
+        if (date > Today())
+            throw new InvalidOperationException("La date de paiement ne peut pas être dans le futur.");
+        if (date < invoice.IssueDate.Date)
+            throw new InvalidOperationException("La date de paiement ne peut pas précéder la date de la facture.");
+
+        invoice.Status = DocumentStatus.Paid;
+        invoice.PaidDate = date;
+        await documents.SaveAsync(invoice).ConfigureAwait(false);
+    }
+
     public static bool CanChangeStatus(CommercialDocument document, DocumentStatus target) =>
         (document.Type, document.Status, target) switch
         {

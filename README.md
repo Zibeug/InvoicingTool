@@ -12,6 +12,10 @@ Tout fonctionne **hors ligne** : les données sont stockées dans une base **SQL
 - **Rappels de paiement** : 1er rappel, 2e rappel, dernier rappel, chacun avec un nouveau délai et des frais
   réglables (cumulés). Chaque rappel est un PDF avec sa QR-facture (montant frais compris, même référence RF
   que la facture). Les factures échues apparaissent « En retard (12 j) » dans les listes.
+- **Paiements** : bouton « Marquer comme payée » dans la facture (avec la date réelle du paiement), depuis le
+  tableau de bord pour les factures en retard, et « Annuler le paiement » en cas d'erreur.
+- **Mode clair / sombre** (onglet Entreprise) : automatique comme l'appareil, clair ou sombre ; appliqué
+  immédiatement et mémorisé sur l'appareil.
 - **Export pour la fiduciaire** (onglet Entreprise) : un ZIP par année avec la liste des factures (CSV pour Excel),
   la ventilation de la TVA, un journal d'écritures à importer dans **Banana Comptabilité** (comptes PME
   1100 / 3400 / 2200 / 1020, à adapter) et le PDF de chaque facture.

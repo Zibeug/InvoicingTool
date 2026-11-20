@@ -25,6 +25,7 @@ public partial class DashboardViewModel : ViewModelBase
 
     private readonly DashboardService _dashboard;
     private readonly ReminderService _reminders;
+    private readonly DocumentService _service;
     private readonly DocumentRepository _documents;
     private readonly SettingsRepository _settings;
     private readonly INavigationService _navigation;
@@ -33,6 +34,7 @@ public partial class DashboardViewModel : ViewModelBase
     public DashboardViewModel(
         DashboardService dashboard,
         ReminderService reminders,
+        DocumentService service,
         DocumentRepository documents,
         SettingsRepository settings,
         INavigationService navigation,
@@ -41,6 +43,7 @@ public partial class DashboardViewModel : ViewModelBase
     {
         _dashboard = dashboard;
         _reminders = reminders;
+        _service = service;
         _documents = documents;
         _settings = settings;
         _navigation = navigation;
@@ -70,7 +73,8 @@ public partial class DashboardViewModel : ViewModelBase
     [ObservableProperty] private string _vatTitle = string.Empty;
     [ObservableProperty] private string _vatText = string.Empty;
     [ObservableProperty] private double _vatProgress;
-    [ObservableProperty] private string _vatColor = "#2E7D32";
+    /// <summary>Ton de l'alerte (« Success », « Warning », « Danger ») : la vue choisit la couleur selon le thème.</summary>
+    [ObservableProperty] private string _vatTone = "Success";
 
     [ObservableProperty] private string? _otherCurrenciesNote;
     [ObservableProperty] private string _backupText = string.Empty;
@@ -140,11 +144,11 @@ public partial class DashboardViewModel : ViewModelBase
 
         VatProgress = Math.Min(1.0, (double)(summary.RevenueYear / threshold));
         IsVatAlert = summary.VatAlert != VatThresholdAlert.None;
-        (VatTitle, VatColor) = summary.VatAlert switch
+        (VatTitle, VatTone) = summary.VatAlert switch
         {
-            VatThresholdAlert.Exceeded => ("Seuil de TVA dépassé", "#C62828"),
-            VatThresholdAlert.Approaching => ("Vous approchez du seuil de TVA", "#E08A00"),
-            _ => ("Seuil d'assujettissement à la TVA", "#2E7D32"),
+            VatThresholdAlert.Exceeded => ("Seuil de TVA dépassé", "Danger"),
+            VatThresholdAlert.Approaching => ("Vous approchez du seuil de TVA", "Warning"),
+            _ => ("Seuil d'assujettissement à la TVA", "Success"),
         };
         VatText = summary.VatAlert switch
         {
@@ -177,6 +181,19 @@ public partial class DashboardViewModel : ViewModelBase
             [Routes.IdParameter] = invoice.Id,
             [Routes.ReminderParameter] = reminder.Id,
         });
+    });
+
+    /// <summary>Paiement reçu aujourd'hui pour une facture en retard.</summary>
+    [RelayCommand]
+    private Task MarkPaidAsync(OverdueRow? row) => row is null ? Task.CompletedTask : RunAsync(async () =>
+    {
+        if (!await Dialogs.ConfirmAsync("Paiement",
+                $"Marquer la facture {row.Invoice.DisplayNumber} ({row.Invoice.ClientName}) comme payée aujourd'hui ?",
+                "Payée", "Annuler"))
+            return;
+        var invoice = await _documents.GetAsync(row.Invoice.Id) ?? row.Invoice;
+        await _service.MarkPaidAsync(invoice, _clock.GetLocalNow().Date);
+        await OnAppearingAsync();
     });
 
     [RelayCommand]

@@ -51,7 +51,7 @@
                 <Border Style="{StaticResource Card}">
                     <VerticalStackLayout>
                         <Label Text="Encaissé cette année" Style="{StaticResource Secondary}" />
-                        <Label Text="{Binding CollectedYearDisplay}" FontFamily="OpenSansSemibold" FontSize="18" TextColor="#2E7D32" />
+                        <Label Text="{Binding CollectedYearDisplay}" FontFamily="OpenSansSemibold" FontSize="18" TextColor="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource SuccessDark}}" />
                     </VerticalStackLayout>
                 </Border>
                 <Border Grid.Column="1" Style="{StaticResource Card}">
@@ -67,8 +67,8 @@
             <Border Style="{StaticResource Card}" IsVisible="{Binding HasVatThreshold}">
                 <VerticalStackLayout Spacing="6">
                     <Label Text="{Binding VatTitle}" FontFamily="OpenSansSemibold"
-                           TextColor="{Binding VatColor, Converter={StaticResource HexToColor}}" />
-                    <ProgressBar Progress="{Binding VatProgress}" ProgressColor="{Binding VatColor, Converter={StaticResource HexToColor}}" />
+                           TextColor="{Binding VatTone, Converter={StaticResource ToneToColor}}" />
+                    <ProgressBar Progress="{Binding VatProgress}" ProgressColor="{Binding VatTone, Converter={StaticResource ToneToColor}}" />
                     <Label Text="{Binding VatText}" Style="{StaticResource Secondary}" />
                 </VerticalStackLayout>
             </Border>
@@ -78,7 +78,7 @@
                 <VerticalStackLayout Spacing="8">
                     <Grid ColumnDefinitions="*,Auto">
                         <Label Text="À relancer" FontFamily="OpenSansSemibold" FontSize="16" />
-                        <Label Grid.Column="1" Text="{Binding OverdueDisplay}" FontFamily="OpenSansSemibold" TextColor="#C62828"
+                        <Label Grid.Column="1" Text="{Binding OverdueDisplay}" FontFamily="OpenSansSemibold" TextColor="{AppThemeBinding Light={StaticResource Danger}, Dark={StaticResource DangerDark}}"
                                IsVisible="{Binding HasOverdue}" />
                     </Grid>
                     <Label Text="Aucune facture en retard. Bravo !" Style="{StaticResource Secondary}"
@@ -97,7 +97,7 @@
                                     <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8">
                                         <Label Text="{Binding Title}" FontFamily="OpenSansSemibold" LineBreakMode="TailTruncation" />
                                         <Label Grid.Column="1" Text="{Binding AmountDisplay}" FontFamily="OpenSansSemibold" />
-                                        <Label Grid.Row="1" Grid.ColumnSpan="2" FontSize="12" TextColor="#C62828">
+                                        <Label Grid.Row="1" Grid.ColumnSpan="2" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource Danger}, Dark={StaticResource DangerDark}}">
                                             <Label.FormattedText>
                                                 <FormattedString>
                                                     <Span Text="{Binding LateText}" />
@@ -106,10 +106,15 @@
                                                 </FormattedString>
                                             </Label.FormattedText>
                                         </Label>
-                                        <Button Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding ActionText}" IsVisible="{Binding CanRemind}"
-                                                Command="{Binding RemindCommand, Source={RelativeSource AncestorType={x:Type vm:DashboardViewModel}}, x:DataType=vm:DashboardViewModel}"
-                                                CommandParameter="{Binding .}" HeightRequest="38" Padding="12,0" Margin="0,6,0,0"
-                                                HorizontalOptions="Start" BackgroundColor="#C62828" TextColor="White" />
+                                        <HorizontalStackLayout Grid.Row="2" Grid.ColumnSpan="2" Spacing="8" Margin="0,6,0,0">
+                                            <Button Text="{Binding ActionText}" IsVisible="{Binding CanRemind}"
+                                                    Command="{Binding RemindCommand, Source={RelativeSource AncestorType={x:Type vm:DashboardViewModel}}, x:DataType=vm:DashboardViewModel}"
+                                                    CommandParameter="{Binding .}" HeightRequest="38" Padding="12,0"
+                                                    BackgroundColor="#C62828" TextColor="White" />
+                                            <Button Text="Payée" HeightRequest="38" Padding="12,0" BackgroundColor="#2E7D32" TextColor="White"
+                                                    Command="{Binding MarkPaidCommand, Source={RelativeSource AncestorType={x:Type vm:DashboardViewModel}}, x:DataType=vm:DashboardViewModel}"
+                                                    CommandParameter="{Binding .}" />
+                                        </HorizontalStackLayout>
                                     </Grid>
                                 </Border>
                             </DataTemplate>
@@ -130,7 +135,7 @@
             <Label Text="{Binding BackupText}" Style="{StaticResource Secondary}" HorizontalTextAlignment="Center">
                 <Label.Triggers>
                     <DataTrigger TargetType="Label" Binding="{Binding IsBackupOverdue}" Value="True">
-                        <Setter Property="TextColor" Value="#E08A00" />
+                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Warning}, Dark={StaticResource WarningDark}}" />
                     </DataTrigger>
                 </Label.Triggers>
             </Label>

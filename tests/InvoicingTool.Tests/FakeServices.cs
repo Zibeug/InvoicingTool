@@ -100,3 +100,10 @@ public sealed class FakeSpeech : ISpeechRecognizer
         Completed?.Invoke(this, text);
     }
 }
+
+public sealed class FakeTheme : IThemeService
+{
+    public ThemeChoice Current { get; private set; } = ThemeChoice.System;
+
+    public void Apply(ThemeChoice choice) => Current = choice;
+}

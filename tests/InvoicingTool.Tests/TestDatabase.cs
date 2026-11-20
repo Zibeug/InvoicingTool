@@ -41,9 +41,10 @@ public sealed class TestDatabase : IAsyncDisposable
 
     public SettingsViewModel CreateSettingsViewModel(
         IDialogService? dialogs = null, IShareService? share = null,
-        IFilePickerService? filePicker = null, IImagePickerService? imagePicker = null) =>
+        IFilePickerService? filePicker = null, IImagePickerService? imagePicker = null, IThemeService? theme = null) =>
         new(Settings, Backup, share ?? new FakeShare(), filePicker ?? new FakeFilePicker(),
-            imagePicker ?? new FakeImagePicker(), Service, Export, new FakeNavigation(), Clock, dialogs ?? new FakeDialogs());
+            imagePicker ?? new FakeImagePicker(), Service, Export, theme ?? new FakeTheme(), new FakeNavigation(), Clock,
+            dialogs ?? new FakeDialogs());
 
     public async ValueTask DisposeAsync()
     {

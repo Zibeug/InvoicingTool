@@ -38,7 +38,7 @@
                             <Label Text="{Binding Detail}" FontSize="13">
                                 <Label.Triggers>
                                     <DataTrigger TargetType="Label" Binding="{Binding MissingPrice}" Value="True">
-                                        <Setter Property="TextColor" Value="#E08A00" />
+                                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Warning}, Dark={StaticResource WarningDark}}" />
                                     </DataTrigger>
                                 </Label.Triggers>
                             </Label>

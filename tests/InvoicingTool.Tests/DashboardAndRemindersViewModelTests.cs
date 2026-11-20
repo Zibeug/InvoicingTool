@@ -21,7 +21,7 @@ public class DashboardAndRemindersViewModelTests
     }
 
     private static DashboardViewModel Dashboard(TestDatabase t, FakeNavigation nav, FakeDialogs dialogs) =>
-        new(t.Dashboard, t.Reminders, t.Documents, t.Settings, nav, t.Clock, dialogs);
+        new(t.Dashboard, t.Reminders, t.Service, t.Documents, t.Settings, nav, t.Clock, dialogs);
 
     [Fact]
     public async Task Dashboard_shows_figures_chart_and_overdue_invoice()

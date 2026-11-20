@@ -1,3 +1,4 @@
+using InvoicingTool.App.Services;
 using InvoicingTool.Presentation.ViewModels;
 
 namespace InvoicingTool.App;
@@ -6,10 +7,11 @@ public partial class App : Application
 {
 	private readonly StartupCoordinator _startup;
 
-	public App(StartupCoordinator startup)
+	public App(StartupCoordinator startup, ThemeService theme)
 	{
 		_startup = startup;
 		InitializeComponent();
+		theme.ApplySaved();
 	}
 
 	protected override Window CreateWindow(IActivationState? activationState)

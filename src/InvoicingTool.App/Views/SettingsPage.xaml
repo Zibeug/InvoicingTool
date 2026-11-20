@@ -66,10 +66,10 @@
                         </VerticalStackLayout>
                         <Switch Grid.Column="1" IsToggled="{Binding QrBillEnabled}" VerticalOptions="Center" />
                     </Grid>
-                    <Label Text="{Binding QrBillStatus}" FontSize="13" TextColor="#E08A00">
+                    <Label Text="{Binding QrBillStatus}" FontSize="13" TextColor="{AppThemeBinding Light={StaticResource Warning}, Dark={StaticResource WarningDark}}">
                         <Label.Triggers>
                             <DataTrigger TargetType="Label" Binding="{Binding IsQrBillReady}" Value="True">
-                                <Setter Property="TextColor" Value="#2E7D32" />
+                                <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource SuccessDark}}" />
                             </DataTrigger>
                         </Label.Triggers>
                     </Label>
@@ -77,6 +77,10 @@
                            Style="{StaticResource Secondary}" />
                 </VerticalStackLayout>
             </Border>
+
+            <Label Text="Thème de l'application" Style="{StaticResource SectionTitle}" />
+            <Picker ItemsSource="{Binding ThemeOptions}" ItemDisplayBinding="{Binding Name, x:DataType=vm:ThemeOption}"
+                    SelectedItem="{Binding SelectedTheme}" />
 
             <Label Text="Apparence des documents" Style="{StaticResource SectionTitle}" />
             <Label Text="Logo (facultatif)" Style="{StaticResource FieldLabel}" />

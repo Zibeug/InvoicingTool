@@ -10,6 +10,13 @@
     <Color x:Key="PrimaryDarkText">#242424</Color>
     <Color x:Key="Secondary">#DCE6F5</Color>
     <Color x:Key="SecondaryDarkText">#6F95D2</Color>
+    <!-- Couleurs d'état : version foncée sur fond clair, version claire sur fond sombre (lisibilité) -->
+    <Color x:Key="Success">#2E7D32</Color>
+    <Color x:Key="SuccessDark">#81C784</Color>
+    <Color x:Key="Warning">#E08A00</Color>
+    <Color x:Key="WarningDark">#FFB74D</Color>
+    <Color x:Key="Danger">#C62828</Color>
+    <Color x:Key="DangerDark">#EF9A9A</Color>
     <Color x:Key="Tertiary">#1B3A66</Color>
 
     <Color x:Key="White">White</Color>
