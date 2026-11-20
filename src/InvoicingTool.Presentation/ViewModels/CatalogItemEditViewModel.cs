@@ -27,10 +27,27 @@ public partial class CatalogItemEditViewModel : ViewModelBase, IParameterReceive
         Title = "Nouvel article";
     }
 
-    [ObservableProperty] private string _label = string.Empty;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PreviewTitle), nameof(PreviewInitials))]
+    private string _label = string.Empty;
     [ObservableProperty] private string? _description;
-    [ObservableProperty] private string _unit = "u";
-    [ObservableProperty] private string _unitPriceText = "0";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PreviewUnit))]
+    private string _unit = "u";
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PreviewPrice))]
+    private string _unitPriceText = "0";
+
+    [ObservableProperty] private string _accentColor = CompanySettings.DefaultAccentColor;
+
+    private MoneyFormatter _money = new(null, null);
+
+    // Aperçu de la carte telle qu'elle apparaîtra dans la liste des articles.
+    public string PreviewTitle => string.IsNullOrWhiteSpace(Label) ? "Nouvel article" : Label.Trim();
+    public string PreviewInitials => CatalogViewModel.Initials(PreviewTitle);
+    public string PreviewPrice => DecimalParser.TryParse(UnitPriceText, out var price) ? _money.Format(price) : "Prix invalide";
+    public string PreviewUnit => CatalogViewModel.UnitDisplay(Unit ?? "u");
     [ObservableProperty] private string _vatRateText = "10";
     [ObservableProperty] private bool _isExisting;
     [ObservableProperty] private string _priceLabel = "Prix unitaire HT";
@@ -48,6 +65,9 @@ public partial class CatalogItemEditViewModel : ViewModelBase, IParameterReceive
     public override async Task OnAppearingAsync()
     {
         var company = await _settings.GetSettingsAsync();
+        _money = MoneyFormatter.For(company);
+        AccentColor = ImageData.NormalizeColor(company.AccentColor, CompanySettings.DefaultAccentColor);
+        OnPropertyChanged(nameof(PreviewPrice));
         ShowVat = !company.VatExempt;
         PriceLabel = $"{(ShowVat ? "Prix unitaire HT" : "Prix unitaire")} ({MoneyFormatter.For(company).CurrencySymbol})";
         TaxRateHint = ShowVat ? company.Country.TaxRateHint : null;

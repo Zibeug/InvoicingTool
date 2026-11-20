@@ -7,35 +7,80 @@
     xmlns:vm="clr-namespace:InvoicingTool.Presentation.ViewModels;assembly=InvoicingTool.Presentation"
     x:DataType="vm:CatalogViewModel">
 
-    <ContentPage.ToolbarItems>
-        <ToolbarItem Text="+ Article" Command="{Binding AddCommand}" />
-    </ContentPage.ToolbarItems>
+    <Grid RowDefinitions="Auto,Auto,*">
+        <!-- Recherche (visible dès qu'il y a des articles) -->
+        <SearchBar Placeholder="Rechercher un article" Text="{Binding SearchText}" IsVisible="{Binding HasItems}" />
+        <Label Grid.Row="1" Text="{Binding CountText}" Style="{StaticResource Secondary}" Margin="16,0,16,4"
+               IsVisible="{Binding HasItems}" />
 
-    <CollectionView ItemsSource="{Binding Items}" Margin="12,8">
-        <CollectionView.EmptyView>
-            <VerticalStackLayout Padding="24" Spacing="12" HorizontalOptions="Center">
-                <Label Text="Enregistrez les produits et services que vous vendez souvent pour remplir vos devis et factures en quelques secondes."
-                       HorizontalTextAlignment="Center" />
-                <Button Text="Ajouter un article" Command="{Binding AddCommand}" />
-            </VerticalStackLayout>
-        </CollectionView.EmptyView>
-        <CollectionView.ItemTemplate>
-            <DataTemplate x:DataType="vm:CatalogItemRow">
-                <Border Style="{StaticResource Card}" Margin="0,4">
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer
-                            Command="{Binding OpenCommand, Source={RelativeSource AncestorType={x:Type vm:CatalogViewModel}}, x:DataType=vm:CatalogViewModel}"
-                            CommandParameter="{Binding .}" />
-                    </Border.GestureRecognizers>
-                    <Grid ColumnDefinitions="*,Auto">
-                        <VerticalStackLayout>
-                            <Label Text="{Binding Label}" FontFamily="OpenSansSemibold" />
-                            <Label Text="{Binding Description}" Style="{StaticResource Secondary}" />
-                        </VerticalStackLayout>
-                        <Label Grid.Column="1" VerticalOptions="Center" Text="{Binding PriceDisplay}" FontFamily="OpenSansSemibold" />
-                    </Grid>
-                </Border>
-            </DataTemplate>
-        </CollectionView.ItemTemplate>
-    </CollectionView>
+        <CollectionView Grid.Row="2" ItemsSource="{Binding Items}" Margin="12,0">
+            <CollectionView.EmptyView>
+                <Grid>
+                    <!-- Catalogue vide -->
+                    <VerticalStackLayout Padding="32" Spacing="16" VerticalOptions="Center" IsVisible="{Binding HasItems, Converter={StaticResource Not}}">
+                        <Image Source="catalog_empty.png" WidthRequest="120" HeightRequest="120" HorizontalOptions="Center" />
+                        <Label Text="Vos articles" FontFamily="OpenSansSemibold" FontSize="20" HorizontalTextAlignment="Center" />
+                        <Label Text="Enregistrez les produits et services que vous vendez souvent. Vous les ajouterez ensuite à vos devis et factures en un geste, ou en les citant pendant une dictée."
+                               Style="{StaticResource Secondary}" HorizontalTextAlignment="Center" />
+                        <Button Text="Créer mon premier article" Command="{Binding AddCommand}" HorizontalOptions="Center" Padding="24,0" />
+                    </VerticalStackLayout>
+                    <!-- Recherche sans résultat -->
+                    <Label Text="Aucun article ne correspond à la recherche." Style="{StaticResource Secondary}"
+                           HorizontalTextAlignment="Center" Margin="0,32" IsVisible="{Binding HasItems}" />
+                </Grid>
+            </CollectionView.EmptyView>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:CatalogItemRow">
+                    <Border Style="{StaticResource Card}" Margin="0,5" Padding="12,10">
+                        <Border.Shadow>
+                            <Shadow Brush="Black" Opacity="0.08" Radius="6" Offset="0,2" />
+                        </Border.Shadow>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding OpenCommand, Source={RelativeSource AncestorType={x:Type vm:CatalogViewModel}}, x:DataType=vm:CatalogViewModel}"
+                                CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                            <!-- Pastille aux initiales, dans la couleur des documents -->
+                            <Border WidthRequest="44" HeightRequest="44" StrokeThickness="0" StrokeShape="RoundRectangle 22" VerticalOptions="Center"
+                                    BackgroundColor="{Binding AccentColor, Source={RelativeSource AncestorType={x:Type vm:CatalogViewModel}}, x:DataType=vm:CatalogViewModel, Converter={StaticResource HexToColor}}">
+                                <Label Text="{Binding Initials}" TextColor="White" FontFamily="OpenSansSemibold" FontSize="16"
+                                       HorizontalOptions="Center" VerticalOptions="Center" />
+                            </Border>
+
+                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                                <Label Text="{Binding Label}" FontFamily="OpenSansSemibold" FontSize="16" LineBreakMode="TailTruncation" />
+                                <Label Text="{Binding Description}" Style="{StaticResource Secondary}" MaxLines="2"
+                                       LineBreakMode="TailTruncation" IsVisible="{Binding HasDescription}" />
+                                <Border IsVisible="{Binding HasVat}" StrokeThickness="0" StrokeShape="RoundRectangle 8" Padding="8,1"
+                                        HorizontalOptions="Start" Margin="0,2,0,0"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}">
+                                    <Label Text="{Binding VatDisplay}" FontSize="11" />
+                                </Border>
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Column="2" VerticalOptions="Center" Spacing="0">
+                                <Label Text="{Binding PriceDisplay}" FontFamily="OpenSansSemibold" FontSize="17" HorizontalTextAlignment="End" />
+                                <Label Text="{Binding UnitDisplay}" Style="{StaticResource Secondary}" FontSize="12" HorizontalTextAlignment="End" />
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+
+            <CollectionView.Footer>
+                <BoxView HeightRequest="80" Color="Transparent" />
+            </CollectionView.Footer>
+        </CollectionView>
+
+        <!-- Bouton flottant « + » -->
+        <Button Grid.Row="2" Text="+" FontSize="30" Padding="0" WidthRequest="60" HeightRequest="60" CornerRadius="30"
+                HorizontalOptions="End" VerticalOptions="End" Margin="20" Command="{Binding AddCommand}"
+                IsVisible="{Binding HasItems}" SemanticProperties.Description="Ajouter un article">
+            <Button.Shadow>
+                <Shadow Brush="Black" Opacity="0.25" Radius="10" Offset="0,4" />
+            </Button.Shadow>
+        </Button>
+    </Grid>
 </views:BasePage>
