@@ -13,8 +13,20 @@ public class DocumentService(
     AppDatabase database,
     DocumentRepository documents,
     SettingsRepository settings,
-    TimeProvider clock)
+    TimeProvider clock,
+    Sync.SyncStateStore? syncState = null)
 {
+    /// <summary>
+    /// Série de numérotation de cet appareil : null hors synchronisation et pour le premier appareil du compte,
+    /// sinon une lettre (« B », « C »…) qui rend les numéros uniques entre appareils, même hors ligne.
+    /// </summary>
+    public async Task<string?> GetSeriesAsync() =>
+        syncState is null ? null : await syncState.GetSeriesLetterAsync().ConfigureAwait(false);
+
+    /// <summary>« F-2026-0012 », ou « F-2026-B-0012 » sur un appareil de la série B.</summary>
+    public static string FormatNumber(string prefix, int year, string? series, int value) =>
+        series is null ? $"{prefix}-{year}-{value:D4}" : $"{prefix}-{year}-{series}-{value:D4}";
+
     public Task<List<DocumentLine>> GetLinesAsync(Guid documentId) => documents.GetLinesAsync(documentId);
 
     public async Task<CommercialDocument> CreateDraftAsync(DocumentType type, Client client)
@@ -108,12 +120,13 @@ public class DocumentService(
         }
 
         var prefix = document.Type == DocumentType.Quote ? company.QuotePrefix : company.InvoicePrefix;
+        var series = await GetSeriesAsync().ConfigureAwait(false);
         var now = clock.GetUtcNow().UtcDateTime;
         var db = await database.GetConnectionAsync().ConfigureAwait(false);
         await db.RunInTransactionAsync(conn =>
         {
-            var next = NextSequenceValue(conn, document.Type, document.IssueDate.Year);
-            document.Number = $"{prefix}-{document.IssueDate.Year}-{next:D4}";
+            var next = NextSequenceValue(conn, document.Type, document.IssueDate.Year, series);
+            document.Number = FormatNumber(prefix, document.IssueDate.Year, series, next);
             document.Status = DocumentStatus.Issued;
             Stamp(document, now);
             conn.InsertOrReplace(document);
@@ -267,7 +280,8 @@ public class DocumentService(
     public async Task<int> GetNextNumberAsync(DocumentType type, int year)
     {
         var db = await database.GetConnectionAsync().ConfigureAwait(false);
-        var sequence = await db.FindAsync<NumberSequence>(SequenceKey(type, year)).ConfigureAwait(false);
+        var series = await GetSeriesAsync().ConfigureAwait(false);
+        var sequence = await db.FindAsync<NumberSequence>(SequenceKey(type, year, series)).ConfigureAwait(false);
         return (sequence?.LastValue ?? 0) + 1;
     }
 
@@ -281,11 +295,12 @@ public class DocumentService(
             throw new InvalidOperationException("Le numéro doit être supérieur ou égal à 1.");
 
         var db = await database.GetConnectionAsync().ConfigureAwait(false);
+        var series = await GetSeriesAsync().ConfigureAwait(false);
         var issued = await db.Table<CommercialDocument>()
             .Where(d => d.Type == type && d.Number != null)
             .ToListAsync().ConfigureAwait(false);
         var highest = issued
-            .Where(d => d.IssueDate.Year == year)
+            .Where(d => d.IssueDate.Year == year && SeriesOf(d.Number!) == series)
             .Select(d => SequenceNumber(d.Number!))
             .DefaultIfEmpty(0)
             .Max();
@@ -296,7 +311,7 @@ public class DocumentService(
                 $"Le numéro {next} est déjà utilisé : la dernière {kind} émise en {year} porte le n° {highest}. Choisissez au moins {highest + 1}.");
         }
 
-        await db.InsertOrReplaceAsync(new NumberSequence { Key = SequenceKey(type, year), LastValue = next - 1 }).ConfigureAwait(false);
+        await db.InsertOrReplaceAsync(new NumberSequence { Key = SequenceKey(type, year, series), LastValue = next - 1 }).ConfigureAwait(false);
     }
 
     private static int SequenceNumber(string number)
@@ -305,11 +320,19 @@ public class DocumentService(
         return match.Success && int.TryParse(match.Value, out var value) ? value : 0;
     }
 
-    private static string SequenceKey(DocumentType type, int year) => $"{type}-{year}";
-
-    private static int NextSequenceValue(SQLiteConnection conn, DocumentType type, int year)
+    /// <summary>Série d'un numéro : « F-2026-B-0012 » → « B » ; « F-2026-0012 » → null.</summary>
+    public static string? SeriesOf(string number)
     {
-        var key = SequenceKey(type, year);
+        var match = Regex.Match(number, @"-\d{4}-(?<series>[A-Z]{1,2}\d*)-\d+$");
+        return match.Success ? match.Groups["series"].Value : null;
+    }
+
+    private static string SequenceKey(DocumentType type, int year, string? series) =>
+        series is null ? $"{type}-{year}" : $"{type}-{year}-{series}";
+
+    private static int NextSequenceValue(SQLiteConnection conn, DocumentType type, int year, string? series)
+    {
+        var key = SequenceKey(type, year, series);
         var sequence = conn.Find<NumberSequence>(key) ?? new NumberSequence { Key = key };
         sequence.LastValue++;
         conn.InsertOrReplace(sequence);

@@ -33,14 +33,7 @@ public sealed record BackupSummary(int Clients, int Documents, int CatalogItems,
 /// </summary>
 public class BackupService(AppDatabase database, SettingsRepository settings, TimeProvider clock)
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true,
-        // Les propriétés calculées (totaux formatés, adresse complète…) ne sont pas sauvegardées.
-        IgnoreReadOnlyProperties = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter() },
-    };
+    private static readonly JsonSerializerOptions JsonOptions = new(DataJson.Options) { WriteIndented = true };
 
     public string SuggestedFileName() =>
         $"sauvegarde-devis-factures-{clock.GetLocalNow():yyyy-MM-dd-HHmm}.json";
@@ -130,6 +123,8 @@ public class BackupService(AppDatabase database, SettingsRepository settings, Ti
             conn.InsertAll(backup.Reminders);
             conn.InsertAll(backup.Sequences);
             conn.Insert(restoredSettings);
+            // Synchronisation : l'appareil redemandera tout l'historique au serveur.
+            conn.Execute("UPDATE SyncState SET LastPulledVersion = 0, LastSyncAt = NULL");
         }).ConfigureAwait(false);
     }
 

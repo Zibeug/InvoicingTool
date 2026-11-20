@@ -3,6 +3,7 @@ using CommunityToolkit.Maui;
 using InvoicingTool.App.Services;
 using InvoicingTool.App.Views;
 using InvoicingTool.Core.Data;
+using InvoicingTool.Core.Sync;
 using InvoicingTool.Core.Services;
 using InvoicingTool.Presentation;
 using InvoicingTool.Presentation.Abstractions;
@@ -45,6 +46,15 @@ public static class MauiProgram
 		services.AddSingleton<DashboardService>();
 		services.AddSingleton<AccountingExportService>();
 
+		// Synchronisation entre appareils (facultative)
+		services.AddSingleton(_ => new HttpClient { Timeout = TimeSpan.FromSeconds(30) });
+		services.AddSingleton<ITokenStore, SecureTokenStore>();
+		services.AddSingleton<SyncStateStore>();
+		services.AddSingleton<SyncApiClient>();
+		services.AddSingleton<SyncEngine>();
+		services.AddSingleton<BackgroundSync>();
+		services.AddSingleton<IDeviceInfoService, DeviceInfoService>();
+
 		// Services d'interface
 		services.AddSingleton<INavigationService, ShellNavigationService>();
 		services.AddSingleton<IDialogService, DialogService>();
@@ -71,6 +81,7 @@ public static class MauiProgram
 		services.AddTransient<TermsViewModel>().AddTransient<TermsPage>();
 		services.AddTransient<SignatureViewModel>().AddTransient<SignaturePage>();
 		services.AddTransient<DictationViewModel>().AddTransient<DictationPage>();
+		services.AddTransient<SyncViewModel>().AddTransient<SyncPage>();
 
 		Routing.RegisterRoute(Routes.ClientEdit, typeof(ClientEditPage));
 		Routing.RegisterRoute(Routes.ClientPicker, typeof(ClientPickerPage));
@@ -80,6 +91,7 @@ public static class MauiProgram
 		Routing.RegisterRoute(Routes.Terms, typeof(TermsPage));
 		Routing.RegisterRoute(Routes.Signature, typeof(SignaturePage));
 		Routing.RegisterRoute(Routes.Dictation, typeof(DictationPage));
+		Routing.RegisterRoute(Routes.Sync, typeof(SyncPage));
 
 #if DEBUG
 		builder.Logging.AddDebug();

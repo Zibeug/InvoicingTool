@@ -16,6 +16,48 @@ jobs:
       # Cœur métier et ViewModels : testables sans téléphone ni Windows.
       - run: dotnet test tests/InvoicingTool.Tests/InvoicingTool.Tests.csproj
 
+  api:
+    # API de synchronisation : tests d'intégration contre une vraie base PostgreSQL.
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      INVOICING_TEST_POSTGRES: Host=localhost;Port=5432;Username=postgres;Password=postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet test tests/InvoicingTool.Api.Tests/InvoicingTool.Api.Tests.csproj
+
+  docker:
+    # Construit l'image de l'API et démarre docker compose (API + PostgreSQL) comme en production.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fichier .env de test
+        run: |
+          echo "POSTGRES_PASSWORD=ci-$(openssl rand -hex 12)" > .env
+          echo "JWT_SECRET=$(openssl rand -base64 48)" >> .env
+      - run: docker compose up -d --build
+      - name: L'API répond et accepte une inscription
+        run: |
+          for i in $(seq 1 30); do curl -sf http://localhost:8080/api/health && break; sleep 2; done
+          curl -sf -X POST http://localhost:8080/api/auth/register -H 'Content-Type: application/json' \
+            -d '{"email":"ci@example.ch","password":"motdepasse123","deviceName":"CI"}' | grep -q accessToken
+      - if: always()
+        run: docker compose logs api
+      - if: always()
+        run: docker compose down -v
+
   windows:
     # Compile l'application Windows et publie un dossier prêt à lancer (InvoicingTool.App.exe), sans installation.
     runs-on: windows-latest

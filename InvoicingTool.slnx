@@ -1,10 +1,13 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/InvoicingTool.Api/InvoicingTool.Api.csproj" />
     <Project Path="src/InvoicingTool.App/InvoicingTool.App.csproj" />
     <Project Path="src/InvoicingTool.Core/InvoicingTool.Core.csproj" />
     <Project Path="src/InvoicingTool.Presentation/InvoicingTool.Presentation.csproj" />
+    <Project Path="src/InvoicingTool.Sync.Contracts/InvoicingTool.Sync.Contracts.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/InvoicingTool.Api.Tests/InvoicingTool.Api.Tests.csproj" />
     <Project Path="tests/InvoicingTool.Tests/InvoicingTool.Tests.csproj" />
   </Folder>
 </Solution>

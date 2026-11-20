@@ -42,6 +42,11 @@
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
 	</ItemGroup>
 
+	<!-- Windows : chiffrement des jetons de synchronisation (DPAPI) -->
+	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+		<PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.14" />
+	</ItemGroup>
+
 	<ItemGroup>
 		<ProjectReference Include="..\InvoicingTool.Core\InvoicingTool.Core.csproj" />
 		<ProjectReference Include="..\InvoicingTool.Presentation\InvoicingTool.Presentation.csproj" />

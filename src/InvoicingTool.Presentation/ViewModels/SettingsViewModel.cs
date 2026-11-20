@@ -472,6 +472,9 @@ public partial class SettingsViewModel : ViewModelBase
     });
 
     [RelayCommand]
+    private Task OpenSyncAsync() => _navigation.GoToAsync(Routes.Sync);
+
+    [RelayCommand]
     private Task ShowTermsAsync() => _navigation.GoToAsync(Routes.Terms);
 
     private static string FormatRates(IEnumerable<decimal> rates) => string.Join(" ; ", rates.Select(DecimalParser.Format));

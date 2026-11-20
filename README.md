@@ -155,6 +155,67 @@ sinon le cadre « Payable par » reste vide, comme le prévoit la norme.
 > Avant la mise en production, scanner une facture avec une application bancaire ou la contrôler avec le portail de
 > validation de SIX. Les tests vérifient le contenu du code QR et la mise en page, pas l'acceptation par une banque.
 
+## Synchronisation entre appareils (concept, facultative)
+
+L'utilisateur peut, s'il le souhaite, retrouver ses données sur plusieurs appareils (téléphone, PC…).
+Désactivée par défaut : onglet **Entreprise > Paramétrer la synchronisation**.
+
+```
+src/
+  InvoicingTool.Sync.Contracts/  Formats d'échange (JSON) partagés par l'application et l'API
+  InvoicingTool.Api/             API ASP.NET Core + PostgreSQL (EF Core), image Docker
+  InvoicingTool.Core/Sync/       Client de l'API et moteur de synchronisation de l'application
+tests/
+  InvoicingTool.Api.Tests/       Tests de l'API (vraie base PostgreSQL) et de bout en bout (deux « appareils »)
+docker-compose.yml               API + PostgreSQL (+ HTTPS automatique en option)
+```
+
+**Fonctionnement**
+- Compte par e-mail et mot de passe (haché avec l'algorithme d'ASP.NET Core Identity). Jeton d'accès JWT de
+  60 minutes, jeton de renouvellement à usage unique (60 jours) : réutiliser un ancien jeton ferme les sessions
+  de l'appareil. Tentatives de connexion limitées par adresse IP. Jetons stockés dans le trousseau (iOS),
+  le Keystore (Android) ou chiffrés par Windows (DPAPI).
+- Chaque appareil garde sa base locale et fonctionne hors ligne. Une synchronisation **envoie** les éléments
+  modifiés localement puis **reçoit** ceux des autres appareils. Le serveur numérote les modifications
+  (version croissante par compte) ; un appareil demande « ce qui a changé depuis la version N ».
+- Le serveur stocke chaque élément tel quel (JSON) : il ne dépend pas du modèle de données de l'application
+  (et pourra plus tard ne recevoir que des données chiffrées de bout en bout).
+- **Conflits** : si le même élément est modifié sur deux appareils, la dernière modification reçue par le serveur
+  l'emporte ; une modification locale pas encore envoyée n'est jamais écrasée. Les documents émis ne se modifient
+  plus, les conflits ne concernent donc que les brouillons, clients, articles et paramètres.
+- **Numérotation** : le premier appareil garde sa série (`F-2026-0012`), chaque appareil ajouté reçoit sa lettre
+  (`F-2026-B-0001`) : aucun numéro ne peut être attribué deux fois, même hors ligne.
+- Un appareil qui rejoint le compte reçoit d'abord les données du compte (ses paramètres vides n'écrasent pas
+  ceux de l'entreprise). L'acceptation des CGU et la date de dernière sauvegarde restent propres à chaque appareil.
+- Synchronisation automatique à l'ouverture et au retour dans l'application, et bouton « Synchroniser maintenant ».
+- `DELETE /api/account` supprime le compte et toutes ses données (droit à l'effacement).
+
+**Lancer le serveur**
+
+```bash
+cp .env.example .env          # renseigner POSTGRES_PASSWORD et JWT_SECRET (openssl rand -base64 48)
+docker compose up -d --build  # API sur http://<serveur>:8080 (santé : /api/health)
+
+# Mise en ligne avec HTTPS automatique (Let's Encrypt) : DOMAIN=sync.mon-entreprise.ch dans .env, puis
+docker compose --profile https up -d --build
+```
+
+La base PostgreSQL n'est pas exposée hors de Docker ; les tables sont créées au démarrage de l'API (migrations EF Core).
+Pour tester avec un téléphone, le serveur HTTP local est accepté en mode Debug (Android) et sur le réseau local (iOS) ;
+en production, utiliser HTTPS.
+
+**Points d'accès** : `POST /api/auth/register`, `/login`, `/refresh`, `/logout`, `DELETE /api/account`,
+`POST /api/sync/push`, `GET /api/sync/pull?since=N`, `GET /api/health`.
+
+**Tests** : `dotnet test tests/InvoicingTool.Api.Tests` (PostgreSQL requis, chaîne de connexion dans
+`INVOICING_TEST_POSTGRES`, par défaut `Host=localhost;Username=postgres;Password=postgres`).
+
+**Limites du concept (à traiter avant une mise en production)**
+- Les conditions d'utilisation doivent mentionner l'hébergement des données sur le serveur (nLPD).
+- Restaurer une sauvegarde sur un appareil synchronisé renvoie tout l'historique ; à utiliser avec prudence.
+- Un appareil qui avait déjà émis des factures avant de rejoindre un compte garde ses anciens numéros.
+- Pas encore de gestion des appareils (liste, retrait), de réinitialisation du mot de passe ni d'abonnement.
+
 ## Pistes pour la suite
 
-- Sauvegarde automatique vers un dossier cloud choisi par l'utilisateur, puis synchronisation entre appareils.
+- Synchronisation : chiffrement de bout en bout, gestion des appareils, réinitialisation du mot de passe, abonnement.

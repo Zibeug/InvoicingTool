@@ -43,6 +43,12 @@
 			</array>
 		</dict>
 	</dict>
+	<!-- Synchronisation : HTTP autorisé uniquement vers le réseau local (serveur de test), HTTPS ailleurs. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Le micro sert à dicter les lignes de vos devis et factures.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>

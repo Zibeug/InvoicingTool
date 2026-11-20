@@ -20,7 +20,8 @@ public sealed class TestDatabase : IAsyncDisposable
         Documents = new DocumentRepository(Database, Clock);
         Settings = new SettingsRepository(Database, Clock);
         Catalog = new CatalogRepository(Database, Clock);
-        Service = new DocumentService(Database, Documents, Settings, Clock);
+        SyncState = new InvoicingTool.Core.Sync.SyncStateStore(Database);
+        Service = new DocumentService(Database, Documents, Settings, Clock, SyncState);
         Backup = new BackupService(Database, Settings, Clock);
         Reminders = new ReminderService(Database, Documents, Settings, Clock);
         Dashboard = new DashboardService(Documents, Settings, Clock);
@@ -34,6 +35,7 @@ public sealed class TestDatabase : IAsyncDisposable
     public SettingsRepository Settings { get; }
     public CatalogRepository Catalog { get; }
     public DocumentService Service { get; }
+    public InvoicingTool.Core.Sync.SyncStateStore SyncState { get; }
     public BackupService Backup { get; }
     public ReminderService Reminders { get; }
     public DashboardService Dashboard { get; }

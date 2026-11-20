@@ -209,6 +209,16 @@
 
             <Button Text="Enregistrer" Command="{Binding SaveCommand}" Margin="0,12,0,0" />
 
+            <!-- Synchronisation entre appareils (facultative) -->
+            <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Synchronisation entre appareils" FontFamily="OpenSansSemibold" FontSize="16" />
+                    <Label Text="Facultative : retrouvez vos données sur votre téléphone et votre ordinateur."
+                           Style="{StaticResource Secondary}" />
+                    <Button Text="Paramétrer la synchronisation" Command="{Binding OpenSyncCommand}" Style="{StaticResource OutlineButton}" />
+                </VerticalStackLayout>
+            </Border>
+
             <!-- Export pour la fiduciaire -->
             <Border Style="{StaticResource Card}" Margin="0,16,0,0">
                 <VerticalStackLayout Spacing="6">

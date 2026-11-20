@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<views:BasePage
+    x:Class="InvoicingTool.App.Views.SyncPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:InvoicingTool.App.Views"
+    xmlns:vm="clr-namespace:InvoicingTool.Presentation.ViewModels;assembly=InvoicingTool.Presentation"
+    x:DataType="vm:SyncViewModel">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="10">
+            <Label Text="Synchronisation entre appareils" FontFamily="OpenSansSemibold" FontSize="20" />
+            <Label Text="Facultative. Retrouvez vos clients, devis et factures sur votre téléphone et votre ordinateur. Chaque appareil continue de fonctionner sans connexion : les modifications sont échangées dès que le réseau est disponible."
+                   Style="{StaticResource Secondary}" />
+
+            <!-- État -->
+            <Border Style="{StaticResource Card}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="{Binding AccountText}" FontFamily="OpenSansSemibold" />
+                    <Label Text="{Binding LastSyncText}" Style="{StaticResource Secondary}" IsVisible="{Binding IsEnabled}" />
+                    <Label Text="{Binding SeriesText}" Style="{StaticResource Secondary}" IsVisible="{Binding IsEnabled}" />
+                    <Label Text="{Binding ErrorText}" FontSize="13" IsVisible="{Binding HasError}"
+                           TextColor="{AppThemeBinding Light={StaticResource Danger}, Dark={StaticResource DangerDark}}" />
+                    <Button Text="Synchroniser maintenant" Command="{Binding SyncNowCommand}" IsVisible="{Binding IsEnabled}" />
+                    <Button Text="Désactiver sur cet appareil" Command="{Binding LogoutCommand}" IsVisible="{Binding IsEnabled}"
+                            Style="{StaticResource DangerButton}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Connexion -->
+            <VerticalStackLayout Spacing="6" IsVisible="{Binding IsDisabled}">
+                <Label Text="Adresse du serveur" Style="{StaticResource FieldLabel}" />
+                <Entry Text="{Binding ServerUrl}" Placeholder="https://sync.mon-entreprise.ch" Keyboard="Url" />
+                <Label Text="E-mail" Style="{StaticResource FieldLabel}" />
+                <Entry Text="{Binding Email}" Keyboard="Email" />
+                <Label Text="Mot de passe (8 caractères minimum)" Style="{StaticResource FieldLabel}" />
+                <Entry Text="{Binding Password}" IsPassword="True" />
+                <Label Text="Nom de cet appareil" Style="{StaticResource FieldLabel}" />
+                <Entry Text="{Binding DeviceName}" />
+
+                <Button Text="Se connecter (appareil supplémentaire)" Command="{Binding LoginCommand}" Margin="0,8,0,0" />
+                <Button Text="Créer un compte (premier appareil)" Command="{Binding RegisterCommand}" Style="{StaticResource OutlineButton}" />
+
+                <Label Style="{StaticResource Secondary}" Margin="0,8,0,0"
+                       Text="En activant la synchronisation, vos données sont envoyées au serveur indiqué. Connectez de préférence un appareil supplémentaire avant d'y saisir des données : il recevra celles de votre compte." />
+            </VerticalStackLayout>
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</views:BasePage>

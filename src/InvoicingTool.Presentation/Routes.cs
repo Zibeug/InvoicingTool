@@ -19,6 +19,7 @@ public static class Routes
     public const string Terms = "terms";
     public const string Signature = "signature";
     public const string Dictation = "dictation";
+    public const string Sync = "sync";
 
     // Paramètres
     public const string IdParameter = "id";

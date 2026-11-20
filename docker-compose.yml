@@ -1,0 +1,58 @@
+# API de synchronisation + PostgreSQL.
+#   1. cp .env.example .env   puis renseigner les mots de passe
+#   2. docker compose up -d --build
+#   3. l'API répond sur http://<serveur>:8080/api/health
+# Pour une mise en ligne avec HTTPS automatique (Let's Encrypt) : renseigner DOMAIN puis
+#   docker compose --profile https up -d --build
+name: invoicingtool
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: invoicingtool
+      POSTGRES_USER: invoicingtool
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Definissez POSTGRES_PASSWORD dans le fichier .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U invoicingtool -d invoicingtool"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    # Pas de port publié : la base n'est accessible qu'à l'API.
+
+  api:
+    build:
+      context: .
+      dockerfile: src/InvoicingTool.Api/Dockerfile
+    image: invoicingtool-api:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__Default: "Host=db;Port=5432;Database=invoicingtool;Username=invoicingtool;Password=${POSTGRES_PASSWORD}"
+      Jwt__Secret: ${JWT_SECRET:?Definissez JWT_SECRET (32 caracteres minimum) dans le fichier .env}
+      RateLimit__AuthPerMinute: ${AUTH_REQUESTS_PER_MINUTE:-20}
+    ports:
+      - "${API_PORT:-8080}:8080"
+
+  # Optionnel : HTTPS automatique devant l'API (profil « https »).
+  caddy:
+    image: caddy:2-alpine
+    profiles: ["https"]
+    restart: unless-stopped
+    depends_on:
+      - api
+    command: caddy reverse-proxy --from ${DOMAIN:-localhost} --to api:8080
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+
+volumes:
+  pgdata:
+  caddy_data:

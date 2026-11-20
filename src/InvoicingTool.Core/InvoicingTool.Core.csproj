@@ -24,6 +24,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\InvoicingTool.Sync.Contracts\InvoicingTool.Sync.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="InvoicingTool.Tests" />
   </ItemGroup>
 

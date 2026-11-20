@@ -24,6 +24,9 @@ public abstract class BasePage : ContentPage, IQueryAttributable
 			receiver.ApplyParameters(query);
 	}
 
+	/// <summary>Recharge l'écran (ex. après une synchronisation en arrière-plan qui a reçu des modifications).</summary>
+	public Task RefreshAsync() => ViewModel.OnAppearingAsync();
+
 	protected override async void OnAppearing()
 	{
 		base.OnAppearing();
