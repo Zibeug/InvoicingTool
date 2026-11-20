@@ -15,6 +15,9 @@ public class Client : EntityBase
     public string? PostalCode { get; set; }
     public string? City { get; set; }
 
+    /// <summary>Code pays ISO (« CH », « FR »…). Vide = pays de l'entreprise.</summary>
+    public string? CountryCode { get; set; }
+
     /// <summary>Numéro d'entreprise (SIRET, IDE, TVA…) pour un client professionnel.</summary>
     public string? CompanyId { get; set; }
 

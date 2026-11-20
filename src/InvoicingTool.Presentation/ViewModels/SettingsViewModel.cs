@@ -98,6 +98,12 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] private string? _companyId;
     [ObservableProperty] private string? _vatNumber;
     [ObservableProperty] private string? _iban;
+
+    /// <summary>QR-facture suisse en bas des factures en CHF.</summary>
+    [ObservableProperty] private bool _qrBillEnabled = true;
+    [ObservableProperty] private string _qrBillStatus = string.Empty;
+    [ObservableProperty] private bool _isQrBillReady;
+    [ObservableProperty] private bool _isSwitzerland;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsVatRegistered))]
     private bool _vatExempt;
@@ -140,6 +146,7 @@ public partial class SettingsViewModel : ViewModelBase
             CompanyId = _company.CompanyId;
             VatNumber = _company.VatNumber;
             Iban = string.IsNullOrWhiteSpace(_company.Iban) ? null : Core.Services.Iban.Format(_company.Iban);
+            QrBillEnabled = _company.QrBillEnabled;
             Logo = _company.Logo;
             AccentColor = ImageData.NormalizeColor(_company.AccentColor, CompanySettings.DefaultAccentColor);
             VatExempt = _company.VatExempt;
@@ -165,6 +172,8 @@ public partial class SettingsViewModel : ViewModelBase
         {
             _loading = false;
         }
+        IsSwitzerland = SelectedCountry.Code == CountryProfiles.Switzerland.Code;
+        UpdateQrBillStatus();
     }
 
     partial void OnVatExemptChanged(bool value)
@@ -176,8 +185,37 @@ public partial class SettingsViewModel : ViewModelBase
 
     partial void OnSelectedCountryChanged(CountryProfile value)
     {
+        IsSwitzerland = value.Code == CountryProfiles.Switzerland.Code;
+        UpdateQrBillStatus();
         if (!_loading)
             _ = ProposeCountryDefaultsAsync(value);
+    }
+
+    partial void OnSelectedCurrencyChanged(Currency value) => UpdateQrBillStatus();
+    partial void OnIbanChanged(string? value) => UpdateQrBillStatus();
+    partial void OnCompanyNameChanged(string value) => UpdateQrBillStatus();
+    partial void OnPostalCodeChanged(string? value) => UpdateQrBillStatus();
+    partial void OnCityChanged(string? value) => UpdateQrBillStatus();
+    partial void OnQrBillEnabledChanged(bool value) => UpdateQrBillStatus();
+
+    /// <summary>Indique en direct si la QR-facture pourra être imprimée, ou ce qu'il manque.</summary>
+    private void UpdateQrBillStatus()
+    {
+        var issues = SwissQrBill.CompanyIssues(new CompanySettings
+        {
+            CountryCode = SelectedCountry.Code,
+            CurrencyCode = SelectedCurrency.Code,
+            Iban = Iban,
+            CompanyName = CompanyName,
+            PostalCode = PostalCode,
+            City = City,
+        });
+        IsQrBillReady = QrBillEnabled && issues.Count == 0;
+        QrBillStatus = !QrBillEnabled
+            ? "Désactivée : les factures n'auront pas de section paiement."
+            : issues.Count == 0
+                ? "Prête : chaque facture en CHF aura sa section paiement avec code QR."
+                : "À compléter :\n• " + string.Join("\n• ", issues);
     }
 
     /// <summary>Quand l'utilisateur change de pays, propose d'appliquer la devise, les taux et les mentions de ce pays.</summary>
@@ -264,6 +302,7 @@ public partial class SettingsViewModel : ViewModelBase
         _company.Iban = string.IsNullOrWhiteSpace(Iban) ? null : Core.Services.Iban.Normalize(Iban);
         Iban = _company.Iban is null ? null : Core.Services.Iban.Format(_company.Iban);
         _company.Logo = HasLogo ? Logo : null;
+        _company.QrBillEnabled = QrBillEnabled;
         _company.AccentColor = accent;
         AccentColor = accent;
         _company.VatExempt = VatExempt;

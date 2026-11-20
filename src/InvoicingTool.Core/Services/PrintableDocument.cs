@@ -1,3 +1,4 @@
+using Codecrete.SwissQRBill.Generator;
 using InvoicingTool.Core.Models;
 
 namespace InvoicingTool.Core.Services;
@@ -41,6 +42,8 @@ public sealed record PrintableDocument
     public required IReadOnlyList<string> FinePrint { get; init; }
     public string? SignatureText { get; init; }
     public PrintableSignature? Signature { get; init; }
+    /// <summary>QR-facture suisse (section paiement), si elle s'applique à ce document.</summary>
+    public Bill? QrBill { get; init; }
     public required string FileNameWithoutExtension { get; init; }
 
     public static PrintableDocument Build(
@@ -127,6 +130,7 @@ public sealed record PrintableDocument
                 ? $"Facture acquittée le {fmt.Date(paid)}"
                 : null,
             FinePrint = finePrint,
+            QrBill = SwissQrBill.Create(doc, company),
             SignatureText = isQuote ? profile.QuoteAcceptanceText : null,
             Signature = isQuote && signature is not null && ImageData.IsSupported(signature.Image)
                 ? new PrintableSignature(signature.Image,

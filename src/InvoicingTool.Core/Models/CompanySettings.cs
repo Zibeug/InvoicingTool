@@ -24,6 +24,9 @@ public class CompanySettings : EntityBase
     /// <summary>Logo de l'entreprise (PNG ou JPEG, déjà réduit), imprimé en haut des documents.</summary>
     public byte[]? Logo { get; set; }
 
+    /// <summary>Ajoute la QR-facture suisse (section paiement) aux factures en CHF.</summary>
+    public bool QrBillEnabled { get; set; } = true;
+
     /// <summary>Couleur des titres et du tableau sur les documents (« #RRGGBB »).</summary>
     public string AccentColor { get; set; } = DefaultAccentColor;
 

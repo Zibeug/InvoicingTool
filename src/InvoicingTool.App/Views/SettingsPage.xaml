@@ -56,6 +56,28 @@
             <Label Text="IBAN (imprimé sur les factures pour le paiement par virement)" Style="{StaticResource FieldLabel}" />
             <Entry Text="{Binding Iban}" Placeholder="CH93 0076 2011 6238 5295 7" Keyboard="Text" />
 
+            <!-- QR-facture suisse : visible pour une entreprise en Suisse -->
+            <Border Style="{StaticResource Card}" IsVisible="{Binding IsSwitzerland}" Margin="0,8,0,0">
+                <VerticalStackLayout Spacing="6">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <VerticalStackLayout>
+                            <Label Text="QR-facture" FontFamily="OpenSansSemibold" FontSize="16" />
+                            <Label Text="Section paiement avec code QR en bas des factures en CHF" Style="{StaticResource Secondary}" />
+                        </VerticalStackLayout>
+                        <Switch Grid.Column="1" IsToggled="{Binding QrBillEnabled}" VerticalOptions="Center" />
+                    </Grid>
+                    <Label Text="{Binding QrBillStatus}" FontSize="13" TextColor="#E08A00">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding IsQrBillReady}" Value="True">
+                                <Setter Property="TextColor" Value="#2E7D32" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <Label Text="La référence de paiement (RF…) est tirée du numéro de facture : votre banque rapproche ainsi chaque paiement de sa facture."
+                           Style="{StaticResource Secondary}" />
+                </VerticalStackLayout>
+            </Border>
+
             <Label Text="Apparence des documents" Style="{StaticResource SectionTitle}" />
             <Label Text="Logo (facultatif)" Style="{StaticResource FieldLabel}" />
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">

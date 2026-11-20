@@ -40,6 +40,10 @@ public class DocumentService(
         document.ClientName = client.Name;
         document.ClientAddress = client.FullAddress;
         document.ClientCompanyId = client.CompanyId;
+        document.ClientStreet = client.Address;
+        document.ClientPostalCode = client.PostalCode;
+        document.ClientCity = client.City;
+        document.ClientCountryCode = client.CountryCode;
     }
 
     /// <summary>Enregistre un brouillon et ses lignes, en recalculant les totaux.</summary>
@@ -156,6 +160,10 @@ public class DocumentService(
             ClientName = quote.ClientName,
             ClientAddress = quote.ClientAddress,
             ClientCompanyId = quote.ClientCompanyId,
+            ClientStreet = quote.ClientStreet,
+            ClientPostalCode = quote.ClientPostalCode,
+            ClientCity = quote.ClientCity,
+            ClientCountryCode = quote.ClientCountryCode,
             Title = quote.Title,
             Notes = quote.Number is null ? quote.Notes : $"Selon devis n° {quote.Number}",
             IssueDate = today,
@@ -186,6 +194,10 @@ public class DocumentService(
             ClientName = source.ClientName,
             ClientAddress = source.ClientAddress,
             ClientCompanyId = source.ClientCompanyId,
+            ClientStreet = source.ClientStreet,
+            ClientPostalCode = source.ClientPostalCode,
+            ClientCity = source.ClientCity,
+            ClientCountryCode = source.ClientCountryCode,
             Title = source.Title,
             Notes = source.Notes,
             IssueDate = today,

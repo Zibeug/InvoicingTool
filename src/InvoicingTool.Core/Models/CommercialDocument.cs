@@ -24,6 +24,12 @@ public class CommercialDocument : EntityBase
     public string? ClientAddress { get; set; }
     public string? ClientCompanyId { get; set; }
 
+    // Adresse structurée du client (débiteur de la QR-facture suisse).
+    public string? ClientStreet { get; set; }
+    public string? ClientPostalCode { get; set; }
+    public string? ClientCity { get; set; }
+    public string? ClientCountryCode { get; set; }
+
     /// <summary>Objet du document (ex. « Création du site web », « Réparation chaudière »).</summary>
     public string? Title { get; set; }
 

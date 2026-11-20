@@ -6,6 +6,7 @@
     xmlns:views="clr-namespace:InvoicingTool.App.Views"
     xmlns:vm="clr-namespace:InvoicingTool.Presentation.ViewModels;assembly=InvoicingTool.Presentation"
     xmlns:model="clr-namespace:InvoicingTool.Core.Models;assembly=InvoicingTool.Core"
+    xmlns:pres="clr-namespace:InvoicingTool.Presentation;assembly=InvoicingTool.Presentation"
     x:DataType="vm:ClientEditViewModel">
 
     <ContentPage.ToolbarItems>
@@ -34,6 +35,9 @@
                     <Entry Text="{Binding City}" />
                 </VerticalStackLayout>
             </Grid>
+            <Label Text="Pays" Style="{StaticResource FieldLabel}" />
+            <Picker ItemsSource="{Binding Countries}" ItemDisplayBinding="{Binding Name, x:DataType=pres:CountryOption}"
+                    SelectedItem="{Binding SelectedCountry}" />
             <Label Text="N° d'entreprise (client professionnel, facultatif)" Style="{StaticResource FieldLabel}" />
             <Entry Text="{Binding CompanyId}" />
             <Label Text="Notes" Style="{StaticResource FieldLabel}" />

@@ -27,6 +27,10 @@ Tout fonctionne **hors ligne** : les données sont stockées dans une base **SQL
 - **Personnalisation** : logo de l'entreprise (réduit automatiquement, transparence conservée) et couleur des titres
   et du tableau (10 couleurs proposées ou code `#RRGGBB`).
 - **IBAN** imprimé sur les factures avec le titulaire, vérifié (clé de contrôle) et mis en forme par groupes de 4.
+- **QR-facture suisse** sur les factures en CHF : récépissé et section paiement avec code QR, conformes aux normes
+  SIX 2025 (adresses structurées), en bas de la dernière page ou sur une page à part si elle est pleine.
+  Référence de paiement « RF… » tirée du numéro de facture (IBAN normal ; les QR-IBAN ne sont pas pris en charge).
+  L'onglet Entreprise indique en direct si tout est prêt ou ce qu'il manque.
 - **Pays et devises** : France, Suisse, Belgique, Luxembourg ou autre ; devise au choix (EUR, CHF, USD, CAD, GBP, FCFA…).
 - **TVA facultative** : si l'entreprise **n'est pas assujettie**, tout ce qui concerne la TVA disparaît de l'application
   et des documents (pas de taux, pas de « HT » / « TTC », un seul total). Une mention légale peut être imprimée,
@@ -62,6 +66,7 @@ src/
                                PrintableDocument + HtmlDocumentRenderer, BackupService (export / restauration),
                                DictationParser (phrase dictée → lignes)
     Pdf/                       PdfDocumentRenderer (PDFsharp/MigraDoc, licence MIT, 100 % .NET) + polices OpenSans
+                               et Liberation Sans ; QrBill/ : dessin de la QR-facture (SwissQRBill, licence MIT)
   InvoicingTool.Presentation/  ViewModels MVVM (CommunityToolkit.Mvvm) — net10.0, testables sans téléphone
   InvoicingTool.App/           Application .NET MAUI : pages XAML, navigation Shell, services natifs,
                                signature (DrawingView) et dictée (OfflineSpeechToText) avec CommunityToolkit.Maui
@@ -122,7 +127,20 @@ Différences avec le téléphone :
 - les données sont stockées dans le dossier de l'utilisateur (`%LOCALAPPDATA%`). Elles sont **propres à chaque appareil** :
   pour passer du téléphone au PC, exporter une sauvegarde sur l'un et la restaurer sur l'autre.
 
+## QR-facture suisse
+
+Générée avec [SwissQRBill.NET](https://github.com/manuelbl/SwissQRBill.NET) (`Codecrete.SwissQRBill.Core`, MIT),
+dessinée dans le PDF avec l'intégration PDFsharp de ses exemples (`src/InvoicingTool.Core/Pdf/QrBill`).
+La section paiement utilise Liberation Sans (police admise par les normes, licence SIL OFL,
+voir `src/InvoicingTool.Core/Fonts/LICENSE-LiberationSans.txt`).
+
+Conditions : entreprise en Suisse, IBAN suisse ou liechtensteinois normal, facture en CHF, émise ou en brouillon
+(pas pour une facture payée ou annulée). Le client (débiteur) est imprimé si son code postal et sa ville sont connus ;
+sinon le cadre « Payable par » reste vide, comme le prévoit la norme.
+
+> Avant la mise en production, scanner une facture avec une application bancaire ou la contrôler avec le portail de
+> validation de SIX. Les tests vérifient le contenu du code QR et la mise en page, pas l'acceptation par une banque.
+
 ## Pistes pour la suite
 
-- QR-facture suisse en bas des factures en CHF.
 - Sauvegarde automatique vers un dossier cloud choisi par l'utilisateur, puis synchronisation entre appareils.

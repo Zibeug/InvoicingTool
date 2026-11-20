@@ -15,6 +15,7 @@ public partial class ClientEditViewModel : ViewModelBase, IParameterReceiver
     private readonly DocumentRepository _documents;
     private readonly DocumentService _documentService;
     private readonly INavigationService _navigation;
+    private readonly SettingsRepository _settings;
     private Client _client = new();
 
     public ClientEditViewModel(
@@ -22,8 +23,10 @@ public partial class ClientEditViewModel : ViewModelBase, IParameterReceiver
         DocumentRepository documents,
         DocumentService documentService,
         INavigationService navigation,
+        SettingsRepository settings,
         IDialogService dialogs) : base(dialogs)
     {
+        _settings = settings;
         _clients = clients;
         _documents = documents;
         _documentService = documentService;
@@ -32,6 +35,11 @@ public partial class ClientEditViewModel : ViewModelBase, IParameterReceiver
     }
 
     private Guid? _clientId;
+
+    /// <summary>Pays proposés pour l'adresse du client (utile à la QR-facture suisse).</summary>
+    public IReadOnlyList<CountryOption> Countries => CountryOption.All;
+
+    [ObservableProperty] private CountryOption _selectedCountry = CountryOption.All[0];
 
     [ObservableProperty] private string _name = string.Empty;
     [ObservableProperty] private string? _contactName;
@@ -59,7 +67,11 @@ public partial class ClientEditViewModel : ViewModelBase, IParameterReceiver
     public override async Task OnAppearingAsync()
     {
         if (_clientId is not { } id)
+        {
+            // Nouveau client : même pays que l'entreprise par défaut.
+            SelectedCountry = CountryOption.Get((await _settings.GetSettingsAsync()).CountryCode);
             return;
+        }
 
         _client = await _clients.GetAsync(id) ?? new Client();
         IsExisting = true;
@@ -71,6 +83,7 @@ public partial class ClientEditViewModel : ViewModelBase, IParameterReceiver
         Address = _client.Address;
         PostalCode = _client.PostalCode;
         City = _client.City;
+        SelectedCountry = CountryOption.Get(_client.CountryCode ?? (await _settings.GetSettingsAsync()).CountryCode);
         CompanyId = _client.CompanyId;
         Notes = _client.Notes;
 
@@ -136,6 +149,7 @@ public partial class ClientEditViewModel : ViewModelBase, IParameterReceiver
         _client.Address = Address;
         _client.PostalCode = PostalCode;
         _client.City = City;
+        _client.CountryCode = SelectedCountry.Code;
         _client.CompanyId = CompanyId;
         _client.Notes = Notes;
         await _clients.SaveAsync(_client);

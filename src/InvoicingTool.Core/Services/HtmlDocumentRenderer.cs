@@ -86,6 +86,11 @@ public static class HtmlDocumentRenderer
             sb.Append("<p class=\"paid\">").Append(E(p.PaidMention)).Append("</p>");
         foreach (var text in p.FinePrint)
             sb.Append("<p class=\"small\">").Append(E(text)).Append("</p>");
+        if (p.QrBill is not null)
+        {
+            sb.Append("<div class=\"qrbill\"><img alt=\"QR-facture\" src=\"data:image/svg+xml;base64,")
+              .Append(Convert.ToBase64String(SwissQrBill.Svg(p.QrBill))).Append("\"></div>");
+        }
 
         sb.Append("</body></html>");
         return sb.ToString();
@@ -95,6 +100,7 @@ public static class HtmlDocumentRenderer
 
     private const string Css = """
         h1{color:#2b5797}
+        .qrbill{margin-top:24px}.qrbill img{width:100%;max-width:800px;display:block;background:#fff}
         .logo{max-height:70px;max-width:200px;margin-bottom:6px}
         .box img{max-width:100%;max-height:88px;display:block;margin:auto}.signed{text-align:right}
         body{font-family:-apple-system,Roboto,"Segoe UI",Arial,sans-serif;color:#222;margin:16px;font-size:14px}

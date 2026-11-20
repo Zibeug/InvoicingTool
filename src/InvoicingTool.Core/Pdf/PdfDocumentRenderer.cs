@@ -1,7 +1,11 @@
+using Codecrete.SwissQRBill.Generator;
 using InvoicingTool.Core.Models;
+using InvoicingTool.Core.Pdf.QrBill;
 using InvoicingTool.Core.Services;
 using MigraDoc.DocumentObjectModel;
 using MigraDoc.DocumentObjectModel.Tables;
+using PdfSharp;
+using PdfSharp.Drawing;
 using MigraDocRenderer = MigraDoc.Rendering.PdfDocumentRenderer;
 
 namespace InvoicingTool.Core.Pdf;
@@ -35,9 +39,11 @@ public static class PdfDocumentRenderer
         section.PageSetup.RightMargin = Unit.FromCentimeter(1.8);
         var width = Unit.FromCentimeter(21 - 3.6);
 
-        var footer = section.Footers.Primary.AddParagraph();
+        // Avec une QR-facture, le bas de la dernière page est réservé à la section paiement :
+        // la numérotation des pages passe alors en haut.
+        var footer = p.QrBill is null ? section.Footers.Primary.AddParagraph() : section.Headers.Primary.AddParagraph();
         footer.Style = "Small";
-        footer.Format.Alignment = ParagraphAlignment.Center;
+        footer.Format.Alignment = p.QrBill is null ? ParagraphAlignment.Center : ParagraphAlignment.Right;
         footer.AddText($"{p.Heading} — page ");
         footer.AddPageField();
         footer.AddText(" / ");
@@ -95,6 +101,8 @@ public static class PdfDocumentRenderer
 
         var renderer = new MigraDocRenderer { Document = document };
         renderer.RenderDocument();
+        if (p.QrBill is not null)
+            AddQrBill(renderer, p.QrBill);
         using var output = new MemoryStream();
         renderer.PdfDocument.Save(output, false);
         return output.ToArray();
@@ -104,6 +112,32 @@ public static class PdfDocumentRenderer
     {
         var value = Convert.ToInt32(hex.TrimStart('#'), 16);
         return new Color((byte)(value >> 16), (byte)(value >> 8), (byte)value);
+    }
+
+    /// <summary>Hauteur de la section paiement (récépissé + section paiement) : 105 mm, en bas d'une page A4.</summary>
+    private static readonly double QrBillHeightPt = XUnit.FromMillimeter(105).Point;
+
+    /// <summary>
+    /// Dessine la section paiement en bas de la dernière page si elle est libre, sinon sur une page supplémentaire.
+    /// </summary>
+    private static void AddQrBill(MigraDocRenderer renderer, Bill bill)
+    {
+        var pdf = renderer.PdfDocument;
+        var page = pdf.Pages[pdf.PageCount - 1];
+        var contentBottom = (renderer.DocumentRenderer.GetRenderInfoFromPage(pdf.PageCount) ?? [])
+            .Select(info => info.LayoutInfo.ContentArea)
+            .Select(area => area.Y.Point + area.Height.Point)
+            .DefaultIfEmpty(0)
+            .Max();
+        var available = page.Height.Point - QrBillHeightPt - XUnit.FromMillimeter(5).Point;
+        if (contentBottom > available)
+        {
+            page = pdf.AddPage();
+            page.Size = PageSize.A4;
+        }
+
+        using var canvas = new PdfSharpCanvas(page, SwissQrBill.FontFamily);
+        QRBill.Draw(bill, canvas);
     }
 
     private static void DefineStyles(Document document, Color accent)
