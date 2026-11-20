@@ -39,6 +39,17 @@ services:
     ports:
       - "${API_PORT:-8080}:8080"
 
+  # Optionnel : site de présentation (profil « website »), servi par nginx sur le port 8081.
+  #   docker compose --profile website up -d
+  website:
+    image: nginx:1.27-alpine
+    profiles: ["website"]
+    restart: unless-stopped
+    volumes:
+      - ./website:/usr/share/nginx/html:ro
+    ports:
+      - "${WEBSITE_PORT:-8081}:80"
+
   # Optionnel : HTTPS automatique devant l'API (profil « https »).
   caddy:
     image: caddy:2-alpine

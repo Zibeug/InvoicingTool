@@ -216,6 +216,15 @@ en production, utiliser HTTPS.
 - Un appareil qui avait déjà émis des factures avant de rejoindre un compte garde ses anciens numéros.
 - Pas encore de gestion des appareils (liste, retrait), de réinitialisation du mot de passe ni d'abonnement.
 
+## Logo et site web
+
+- `branding/` : proposition de logo (symbole, version horizontale, une couleur) et couleurs de la marque.
+  L'icône de l'application reprend le symbole.
+- `website/` : site de présentation statique (bêta gratuite), sans cookie ni traceur, polices hébergées localement.
+  Déploiement : `docker compose --profile website up -d` (nginx, port 8081), GitHub Pages (workflow « Site web »,
+  lancement manuel) ou n'importe quel hébergeur de fichiers. Voir `website/README.md` pour les éléments à compléter
+  (adresse e-mail, mentions légales) avant la mise en ligne.
+
 ## Pistes pour la suite
 
 - Synchronisation : chiffrement de bout en bout, gestion des appareils, réinitialisation du mot de passe, abonnement.
