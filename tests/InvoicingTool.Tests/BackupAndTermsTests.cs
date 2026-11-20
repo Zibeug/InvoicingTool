@@ -164,7 +164,7 @@ public class BackupAndTermsTests
     {
         await using var t = new TestDatabase();
         var nav = new FakeNavigation();
-        var startup = new StartupCoordinator(t.Settings, t.Backup, nav, new FakeShare(), new FakeDialogs());
+        var startup = new StartupCoordinator(t.Settings, t.Backup, nav, new FakeShare(), new FakeTheme(), new FakeDialogs());
 
         await startup.RunAsync();
         Assert.Equal(Routes.Terms, nav.History.Single().Route);
@@ -205,7 +205,7 @@ public class BackupAndTermsTests
         await SeedAsync(t);
         await t.Settings.SaveAsync(await AcceptedSettingsAsync(t));
         var share = new FakeShare();
-        var startup = new StartupCoordinator(t.Settings, t.Backup, new FakeNavigation(), share, new FakeDialogs { ConfirmResult = true });
+        var startup = new StartupCoordinator(t.Settings, t.Backup, new FakeNavigation(), share, new FakeTheme(), new FakeDialogs { ConfirmResult = true });
 
         await startup.RunAsync();
         await startup.RunAsync();

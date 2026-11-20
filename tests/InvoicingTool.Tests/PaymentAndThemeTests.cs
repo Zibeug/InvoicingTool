@@ -101,15 +101,43 @@ public class PaymentAndThemeTests
     }
 
     [Fact]
-    public async Task Theme_choice_applies_immediately()
+    public async Task Theme_is_the_app_own_setting_saved_with_the_data()
     {
         await using var t = new TestDatabase();
         var theme = new FakeTheme();
         var vm = t.CreateSettingsViewModel(theme: theme);
-        Assert.Equal(ThemeChoice.System, vm.SelectedTheme.Choice);
+        await vm.OnAppearingAsync();
+        Assert.Equal(["Clair", "Sombre"], vm.ThemeOptions.Select(o => o.Name)); // pas de « comme l'appareil »
+        Assert.Equal(ThemeChoice.Light, vm.SelectedTheme.Choice);
 
         vm.SelectedTheme = vm.ThemeOptions.Single(o => o.Choice == ThemeChoice.Dark);
 
-        Assert.Equal(ThemeChoice.Dark, theme.Current); // sans attendre « Enregistrer »
+        Assert.Equal(ThemeChoice.Dark, theme.Current); // appliqué sans attendre « Enregistrer »
+        // L'enregistrement se fait en arrière-plan : on attend qu'il soit visible (au plus 2 s).
+        for (var i = 0; i < 40 && (await t.Settings.GetSettingsAsync()).AppTheme != "Dark"; i++)
+            await Task.Delay(50);
+        Assert.Equal("Dark", (await t.Settings.GetSettingsAsync()).AppTheme);
+
+        // « Enregistrer » ne remet pas l'ancien thème.
+        await vm.SaveCommand.ExecuteAsync(null);
+        Assert.Equal("Dark", (await t.Settings.GetSettingsAsync()).AppTheme);
+    }
+
+    [Fact]
+    public async Task Saved_theme_is_applied_at_startup_and_follows_a_restore()
+    {
+        await using var source = new TestDatabase();
+        await source.Settings.SaveAsync(new CompanySettings { AppTheme = "Dark" });
+        var file = await source.Backup.ExportAsync();
+
+        await using var target = new TestDatabase();
+        await target.Settings.SaveAsync(new CompanySettings { TermsAcceptedVersion = TermsOfUse.Version });
+        await target.Backup.RestoreAsync(InvoicingTool.Core.Services.BackupService.Read(new MemoryStream(file)));
+        var theme = new FakeTheme();
+        var startup = new StartupCoordinator(target.Settings, target.Backup, new FakeNavigation(), new FakeShare(), theme, new FakeDialogs());
+
+        await startup.RunAsync();
+
+        Assert.Equal(ThemeChoice.Dark, theme.Current);
     }
 }

@@ -60,17 +60,32 @@ public partial class SettingsViewModel : ViewModelBase
 
     public IReadOnlyList<CountryProfile> Countries => CountryProfiles.All;
 
-    /// <summary>Thème de l'application : appliqué tout de suite, sans attendre « Enregistrer ».</summary>
+    /// <summary>Thème propre à l'application (ne suit pas Windows ni Android).</summary>
     public IReadOnlyList<ThemeOption> ThemeOptions { get; } =
     [
-        new(ThemeChoice.System, "Automatique (comme l'appareil)"),
         new(ThemeChoice.Light, "Clair"),
         new(ThemeChoice.Dark, "Sombre"),
     ];
 
     [ObservableProperty] private ThemeOption _selectedTheme;
 
-    partial void OnSelectedThemeChanged(ThemeOption value) => _theme.Apply(value.Choice);
+    /// <summary>Appliqué et enregistré tout de suite, sans attendre « Enregistrer ».</summary>
+    partial void OnSelectedThemeChanged(ThemeOption value)
+    {
+        _theme.Apply(value.Choice);
+        if (!_loading)
+            _ = SaveThemeAsync(value.Choice);
+    }
+
+    private async Task SaveThemeAsync(ThemeChoice choice)
+    {
+        var current = await _settings.GetSettingsAsync();
+        current.AppTheme = choice.ToString();
+        await _settings.SaveAsync(current);
+    }
+
+    public static ThemeChoice ParseTheme(string? value) =>
+        Enum.TryParse<ThemeChoice>(value, out var choice) ? choice : ThemeChoice.Light;
     public IReadOnlyList<Currency> CurrencyList => Currencies.All;
 
     /// <summary>Couleurs proposées pour les documents ; une couleur libre (#RRGGBB) peut aussi être saisie.</summary>
@@ -173,6 +188,7 @@ public partial class SettingsViewModel : ViewModelBase
             SelectedCountry = _company.Country;
             SelectedCurrency = Currencies.Get(_company.CurrencyCode);
             CompanyName = _company.CompanyName;
+            SelectedTheme = ThemeOptions.First(o => o.Choice == ParseTheme(_company.AppTheme));
             OwnerName = _company.OwnerName;
             Address = _company.Address;
             PostalCode = _company.PostalCode;

@@ -103,7 +103,7 @@ public sealed class FakeSpeech : ISpeechRecognizer
 
 public sealed class FakeTheme : IThemeService
 {
-    public ThemeChoice Current { get; private set; } = ThemeChoice.System;
+    public ThemeChoice Current { get; private set; } = ThemeChoice.Light;
 
     public void Apply(ThemeChoice choice) => Current = choice;
 }

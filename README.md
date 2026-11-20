@@ -14,8 +14,8 @@ Tout fonctionne **hors ligne** : les données sont stockées dans une base **SQL
   que la facture). Les factures échues apparaissent « En retard (12 j) » dans les listes.
 - **Paiements** : bouton « Marquer comme payée » dans la facture (avec la date réelle du paiement), depuis le
   tableau de bord pour les factures en retard, et « Annuler le paiement » en cas d'erreur.
-- **Mode clair / sombre** (onglet Entreprise) : automatique comme l'appareil, clair ou sombre ; appliqué
-  immédiatement et mémorisé sur l'appareil.
+- **Mode clair / sombre** (onglet Entreprise) : réglage propre à l'application, indépendant de Windows et
+  d'Android. Appliqué immédiatement, enregistré avec les données (donc inclus dans la sauvegarde).
 - **Export pour la fiduciaire** (onglet Entreprise) : un ZIP par année avec la liste des factures (CSV pour Excel),
   la ventilation de la TVA, un journal d'écritures à importer dans **Banana Comptabilité** (comptes PME
   1100 / 3400 / 2200 / 1020, à adapter) et le PDF de chaque facture.

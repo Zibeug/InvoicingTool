@@ -2,34 +2,33 @@ using InvoicingTool.Presentation.Abstractions;
 
 namespace InvoicingTool.App.Services;
 
-/// <summary>Mode clair / sombre : préférence propre à l'appareil (non incluse dans la sauvegarde des données).</summary>
+/// <summary>
+/// Mode clair / sombre propre à l'application : le thème est imposé à l'application et ne suit jamais
+/// celui de Windows ou d'Android. Le réglage est enregistré dans les paramètres de l'application ;
+/// une copie locale permet seulement de l'appliquer dès l'ouverture, sans attendre la base de données.
+/// </summary>
 public sealed class ThemeService : IThemeService
 {
-	private const string PreferenceKey = "theme";
+	private const string StartupCacheKey = "theme";
 
-	public ThemeChoice Current =>
-		Enum.TryParse<ThemeChoice>(Preferences.Default.Get(PreferenceKey, nameof(ThemeChoice.System)), out var choice)
-			? choice
-			: ThemeChoice.System;
+	public ThemeChoice Current { get; private set; } =
+		Enum.TryParse<ThemeChoice>(Preferences.Default.Get(StartupCacheKey, nameof(ThemeChoice.Light)), out var cached)
+			? cached
+			: ThemeChoice.Light;
 
 	public void Apply(ThemeChoice choice)
 	{
-		Preferences.Default.Set(PreferenceKey, choice.ToString());
-		ApplyToApplication(choice);
+		Current = choice;
+		Preferences.Default.Set(StartupCacheKey, choice.ToString());
+		ApplyToApplication();
 	}
 
-	/// <summary>Au démarrage : réapplique le thème choisi.</summary>
-	public void ApplySaved() => ApplyToApplication(Current);
+	/// <summary>À l'ouverture : thème de la dernière utilisation, avant même la lecture des paramètres.</summary>
+	public void ApplyAtStartup() => ApplyToApplication();
 
-	private static void ApplyToApplication(ThemeChoice choice)
+	private void ApplyToApplication()
 	{
-		if (Application.Current is not { } app)
-			return;
-		app.UserAppTheme = choice switch
-		{
-			ThemeChoice.Light => AppTheme.Light,
-			ThemeChoice.Dark => AppTheme.Dark,
-			_ => AppTheme.Unspecified,
-		};
+		if (Application.Current is { } app)
+			app.UserAppTheme = Current == ThemeChoice.Dark ? AppTheme.Dark : AppTheme.Light;
 	}
 }

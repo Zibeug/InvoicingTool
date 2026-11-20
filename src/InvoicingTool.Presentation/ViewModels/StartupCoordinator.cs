@@ -13,6 +13,7 @@ public sealed class StartupCoordinator(
     BackupService backup,
     INavigationService navigation,
     IShareService share,
+    IThemeService theme,
     IDialogService dialogs)
 {
     public static readonly TimeSpan BackupReminderAge = TimeSpan.FromDays(30);
@@ -21,6 +22,8 @@ public sealed class StartupCoordinator(
 
     public async Task RunAsync()
     {
+        theme.Apply(SettingsViewModel.ParseTheme((await settings.GetSettingsAsync()).AppTheme));
+
         if (!await TermsViewModel.AreAcceptedAsync(settings))
         {
             await navigation.GoToAsync(Routes.Terms);

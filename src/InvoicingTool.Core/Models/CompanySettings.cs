@@ -46,6 +46,9 @@ public class CompanySettings : EntityBase
     /// <summary>Ajoute la QR-facture suisse (section paiement) aux factures en CHF.</summary>
     public bool QrBillEnabled { get; set; } = true;
 
+    /// <summary>Thème de l'application : « Light » ou « Dark », indépendant de celui de l'appareil.</summary>
+    public string AppTheme { get; set; } = "Light";
+
     /// <summary>Couleur des titres et du tableau sur les documents (« #RRGGBB »).</summary>
     public string AccentColor { get; set; } = DefaultAccentColor;
 

@@ -11,7 +11,7 @@ public partial class App : Application
 	{
 		_startup = startup;
 		InitializeComponent();
-		theme.ApplySaved();
+		theme.ApplyAtStartup();
 	}
 
 	protected override Window CreateWindow(IActivationState? activationState)
