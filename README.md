@@ -6,6 +6,15 @@ Tout fonctionne **hors ligne** : les données sont stockées dans une base **SQL
 
 ## Fonctionnalités
 
+- **Tableau de bord** (onglet Accueil) : chiffre d'affaires de l'année et du mois, graphique des 12 derniers mois,
+  encaissé / à encaisser, devis en attente, **factures à relancer** et, pour une entreprise non assujettie,
+  **alerte au seuil de TVA** (CHF 100 000 en Suisse, réglable).
+- **Rappels de paiement** : 1er rappel, 2e rappel, dernier rappel, chacun avec un nouveau délai et des frais
+  réglables (cumulés). Chaque rappel est un PDF avec sa QR-facture (montant frais compris, même référence RF
+  que la facture). Les factures échues apparaissent « En retard (12 j) » dans les listes.
+- **Export pour la fiduciaire** (onglet Entreprise) : un ZIP par année avec la liste des factures (CSV pour Excel),
+  la ventilation de la TVA, un journal d'écritures à importer dans **Banana Comptabilité** (comptes PME
+  1100 / 3400 / 2200 / 1020, à adapter) et le PDF de chaque facture.
 - **Clients** : coordonnées, recherche, historique des devis et factures.
 - **Articles** : les produits et services vendus souvent (« Heure de conseil — 120 CHF/h »), pour remplir un document en un geste.
 - **Devis et factures** :
@@ -64,7 +73,8 @@ src/
     Data/                      AppDatabase + dépôts (suppression logique)
     Services/                  DocumentCalculator, DocumentService (cycle de vie, numérotation), MoneyFormatter,
                                PrintableDocument + HtmlDocumentRenderer, BackupService (export / restauration),
-                               DictationParser (phrase dictée → lignes)
+                               DictationParser (phrase dictée → lignes), DashboardService (chiffres clés),
+                               ReminderService (rappels), AccountingExportService (export fiduciaire)
     Pdf/                       PdfDocumentRenderer (PDFsharp/MigraDoc, licence MIT, 100 % .NET) + polices OpenSans
                                et Liberation Sans ; QrBill/ : dessin de la QR-facture (SwissQRBill, licence MIT)
   InvoicingTool.Presentation/  ViewModels MVVM (CommunityToolkit.Mvvm) — net10.0, testables sans téléphone

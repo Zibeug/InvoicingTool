@@ -30,6 +30,8 @@ public sealed record PrintableDocument
     public required IReadOnlyList<(string Label, string Value)> Dates { get; init; }
     public string? Subject { get; init; }
     public required bool ShowTax { get; init; }
+    /// <summary>Colonnes quantité, unité et prix unitaire (masquées pour un rappel : seulement désignation et montant).</summary>
+    public bool ShowQuantities { get; init; } = true;
     public required string TaxName { get; init; }
     public required string UnitPriceHeader { get; init; }
     public required string TotalHeader { get; init; }

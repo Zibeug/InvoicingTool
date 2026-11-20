@@ -146,7 +146,7 @@ public class CountryAndPdfTests
         var client = new Client { Name = "M. Petit" };
         await t.Clients.SaveAsync(client);
         var doc = await t.Service.CreateDraftAsync(DocumentType.Invoice, client);
-        var vm = new DocumentEditViewModel(t.Documents, t.Service, t.Settings, t.Catalog, new FakeNavigation(), new FakeDialogs());
+        var vm = new DocumentEditViewModel(t.Documents, t.Service, t.Settings, t.Catalog, t.Reminders, new FakeNavigation(), new FakeDialogs());
         vm.ApplyParameters(new Dictionary<string, object> { [Presentation.Routes.IdParameter] = doc.Id });
         await vm.OnAppearingAsync();
 
@@ -219,7 +219,7 @@ public class CountryAndPdfTests
         var client = new Client { Name = "M. Muller" };
         await t.Clients.SaveAsync(client);
         var doc = await t.Service.CreateDraftAsync(DocumentType.Quote, client);
-        var vm = new DocumentEditViewModel(t.Documents, t.Service, t.Settings, t.Catalog, new FakeNavigation(), new FakeDialogs());
+        var vm = new DocumentEditViewModel(t.Documents, t.Service, t.Settings, t.Catalog, t.Reminders, new FakeNavigation(), new FakeDialogs());
         vm.ApplyParameters(new Dictionary<string, object> { [Presentation.Routes.IdParameter] = doc.Id });
         await vm.OnAppearingAsync();
 

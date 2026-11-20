@@ -11,9 +11,9 @@ public sealed class TestDatabase : IAsyncDisposable
 {
     private readonly string _path = Path.Combine(Path.GetTempPath(), $"invoicing-test-{Guid.NewGuid():N}.db3");
 
-    public TestDatabase()
+    public TestDatabase(DateTimeOffset? start = null)
     {
-        Clock = new FakeTimeProvider(new DateTimeOffset(2026, 3, 15, 10, 0, 0, TimeSpan.Zero));
+        Clock = new FakeTimeProvider(start ?? new DateTimeOffset(2026, 3, 15, 10, 0, 0, TimeSpan.Zero));
         Clock.SetLocalTimeZone(TimeZoneInfo.Utc);
         Database = new AppDatabase(_path);
         Clients = new ClientRepository(Database, Clock);
@@ -22,6 +22,9 @@ public sealed class TestDatabase : IAsyncDisposable
         Catalog = new CatalogRepository(Database, Clock);
         Service = new DocumentService(Database, Documents, Settings, Clock);
         Backup = new BackupService(Database, Settings, Clock);
+        Reminders = new ReminderService(Database, Documents, Settings, Clock);
+        Dashboard = new DashboardService(Documents, Settings, Clock);
+        Export = new AccountingExportService(Documents, Settings, Clock);
     }
 
     public FakeTimeProvider Clock { get; }
@@ -32,12 +35,15 @@ public sealed class TestDatabase : IAsyncDisposable
     public CatalogRepository Catalog { get; }
     public DocumentService Service { get; }
     public BackupService Backup { get; }
+    public ReminderService Reminders { get; }
+    public DashboardService Dashboard { get; }
+    public AccountingExportService Export { get; }
 
     public SettingsViewModel CreateSettingsViewModel(
         IDialogService? dialogs = null, IShareService? share = null,
         IFilePickerService? filePicker = null, IImagePickerService? imagePicker = null) =>
         new(Settings, Backup, share ?? new FakeShare(), filePicker ?? new FakeFilePicker(),
-            imagePicker ?? new FakeImagePicker(), Service, new FakeNavigation(), Clock, dialogs ?? new FakeDialogs());
+            imagePicker ?? new FakeImagePicker(), Service, Export, new FakeNavigation(), Clock, dialogs ?? new FakeDialogs());
 
     public async ValueTask DisposeAsync()
     {

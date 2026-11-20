@@ -133,6 +133,8 @@
                 <Label Text="La TVA est masquée partout : les prix et les totaux sont des montants nets." Style="{StaticResource Secondary}" />
                 <Label Text="Mention imprimée sur les documents (laisser vide si aucune)" Style="{StaticResource FieldLabel}" />
                 <Entry Text="{Binding VatExemptionMention}" />
+                <Label Text="Seuil d'assujettissement à la TVA (alerte du tableau de bord, 0 pour désactiver)" Style="{StaticResource FieldLabel}" />
+                <Entry Text="{Binding VatThresholdText}" Keyboard="Numeric" Placeholder="Ex. 100000" />
             </VerticalStackLayout>
             <VerticalStackLayout IsVisible="{Binding IsVatRegistered}" Spacing="6">
                 <Label Text="{Binding VatNumberLabel}" Style="{StaticResource FieldLabel}" />
@@ -181,7 +183,40 @@
             <Label Text="Conditions de paiement (bas des factures)" Style="{StaticResource FieldLabel}" />
             <Editor Text="{Binding PaymentTerms}" AutoSize="TextChanges" />
 
+            <Label Text="Rappels de paiement" Style="{StaticResource SectionTitle}" />
+            <Label Text="Frais ajoutés à chaque rappel (0 = sans frais). En Suisse, des frais ne peuvent être réclamés que s'ils figurent dans vos conditions."
+                   Style="{StaticResource Secondary}" />
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                <VerticalStackLayout>
+                    <Label Text="1er rappel" Style="{StaticResource FieldLabel}" />
+                    <Entry Text="{Binding ReminderFee1Text}" Keyboard="Numeric" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1">
+                    <Label Text="2e rappel" Style="{StaticResource FieldLabel}" />
+                    <Entry Text="{Binding ReminderFee2Text}" Keyboard="Numeric" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="2">
+                    <Label Text="Dernier rappel" Style="{StaticResource FieldLabel}" />
+                    <Entry Text="{Binding ReminderFee3Text}" Keyboard="Numeric" />
+                </VerticalStackLayout>
+            </Grid>
+            <Label Text="Délai de paiement accordé par chaque rappel (jours)" Style="{StaticResource FieldLabel}" />
+            <Entry Text="{Binding ReminderDelayDaysText}" Keyboard="Numeric" />
+
             <Button Text="Enregistrer" Command="{Binding SaveCommand}" Margin="0,12,0,0" />
+
+            <!-- Export pour la fiduciaire -->
+            <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Export pour la fiduciaire" FontFamily="OpenSansSemibold" FontSize="16" />
+                    <Label Text="Un fichier ZIP par année : liste des factures (Excel), ventilation de la TVA, écritures à importer dans Banana Comptabilité et le PDF de chaque facture."
+                           Style="{StaticResource Secondary}" />
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                        <Picker ItemsSource="{Binding ExportYears}" SelectedItem="{Binding SelectedExportYear}" WidthRequest="100" />
+                        <Button Grid.Column="1" Text="Exporter l'année" Command="{Binding ExportAccountingCommand}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
 
             <Label Text="Conditions d'utilisation" Style="{StaticResource SectionTitle}" />
             <Label Text="{Binding TermsAcceptedDisplay}" Style="{StaticResource Secondary}" />

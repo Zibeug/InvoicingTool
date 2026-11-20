@@ -14,6 +14,7 @@
             <conv:DocumentStatusTextConverter x:Key="StatusText" />
             <conv:DocumentStatusColorConverter x:Key="StatusColor" />
             <conv:InvertedBoolConverter x:Key="Not" />
+            <conv:IsNotEmptyConverter x:Key="IsNotEmpty" />
             <conv:BytesToImageSourceConverter x:Key="BytesToImage" />
             <conv:HexToColorConverter x:Key="HexToColor" />
 

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<views:BasePage
+    x:Class="InvoicingTool.App.Views.DashboardPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:InvoicingTool.App.Views"
+    xmlns:vm="clr-namespace:InvoicingTool.Presentation.ViewModels;assembly=InvoicingTool.Presentation"
+    x:DataType="vm:DashboardViewModel">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="12">
+            <Label Text="{Binding Greeting}" FontFamily="OpenSansSemibold" FontSize="22" />
+
+            <!-- Actions rapides -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Button Text="+ Devis" Command="{Binding NewQuoteCommand}" Style="{StaticResource OutlineButton}" />
+                <Button Grid.Column="1" Text="+ Facture" Command="{Binding NewInvoiceCommand}" />
+            </Grid>
+
+            <!-- Chiffre d'affaires et graphique des 12 derniers mois -->
+            <Border Style="{StaticResource Card}">
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="{Binding YearLabel}" Style="{StaticResource Secondary}" />
+                    <Label Text="{Binding RevenueYearDisplay}" FontFamily="OpenSansSemibold" FontSize="28" />
+                    <Label Text="{Binding RevenueMonthDisplay}" Style="{StaticResource Secondary}" />
+                    <Grid HeightRequest="120" Margin="0,12,0,0">
+                        <HorizontalStackLayout BindableLayout.ItemsSource="{Binding Months}" Spacing="0" HorizontalOptions="Fill">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:MonthBar">
+                                    <Grid RowDefinitions="*,Auto" WidthRequest="26" Margin="1,0">
+                                        <BoxView VerticalOptions="End" HeightRequest="{Binding Height}" CornerRadius="3,3,0,0"
+                                                 Color="{StaticResource Primary}" Opacity="0.45">
+                                            <BoxView.Triggers>
+                                                <DataTrigger TargetType="BoxView" Binding="{Binding IsCurrentMonth}" Value="True">
+                                                    <Setter Property="Opacity" Value="1" />
+                                                </DataTrigger>
+                                            </BoxView.Triggers>
+                                        </BoxView>
+                                        <Label Grid.Row="1" Text="{Binding Label}" FontSize="10" HorizontalTextAlignment="Center"
+                                               Style="{StaticResource Secondary}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </HorizontalStackLayout>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Encaissé / à encaisser -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout>
+                        <Label Text="Encaissé cette année" Style="{StaticResource Secondary}" />
+                        <Label Text="{Binding CollectedYearDisplay}" FontFamily="OpenSansSemibold" FontSize="18" TextColor="#2E7D32" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Column="1" Style="{StaticResource Card}">
+                    <VerticalStackLayout>
+                        <Label Text="À encaisser" Style="{StaticResource Secondary}" />
+                        <Label Text="{Binding OutstandingDisplay}" FontFamily="OpenSansSemibold" FontSize="18" />
+                        <Label Text="{Binding OutstandingCountText}" Style="{StaticResource Secondary}" FontSize="12" />
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+
+            <!-- Seuil de TVA (entreprise non assujettie) -->
+            <Border Style="{StaticResource Card}" IsVisible="{Binding HasVatThreshold}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="{Binding VatTitle}" FontFamily="OpenSansSemibold"
+                           TextColor="{Binding VatColor, Converter={StaticResource HexToColor}}" />
+                    <ProgressBar Progress="{Binding VatProgress}" ProgressColor="{Binding VatColor, Converter={StaticResource HexToColor}}" />
+                    <Label Text="{Binding VatText}" Style="{StaticResource Secondary}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Factures en retard -->
+            <Border Style="{StaticResource Card}">
+                <VerticalStackLayout Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Text="À relancer" FontFamily="OpenSansSemibold" FontSize="16" />
+                        <Label Grid.Column="1" Text="{Binding OverdueDisplay}" FontFamily="OpenSansSemibold" TextColor="#C62828"
+                               IsVisible="{Binding HasOverdue}" />
+                    </Grid>
+                    <Label Text="Aucune facture en retard. Bravo !" Style="{StaticResource Secondary}"
+                           IsVisible="{Binding HasOverdue, Converter={StaticResource Not}}" />
+                    <Label Text="{Binding OverdueCountText}" Style="{StaticResource Secondary}" IsVisible="{Binding HasOverdue}" />
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Overdue}" Spacing="8">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:OverdueRow">
+                                <Border StrokeThickness="0" StrokeShape="RoundRectangle 8" Padding="10"
+                                        BackgroundColor="{AppThemeBinding Light=#FDECEA, Dark=#3A2222}">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding OpenInvoiceCommand, Source={RelativeSource AncestorType={x:Type vm:DashboardViewModel}}, x:DataType=vm:DashboardViewModel}"
+                                            CommandParameter="{Binding .}" />
+                                    </Border.GestureRecognizers>
+                                    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8">
+                                        <Label Text="{Binding Title}" FontFamily="OpenSansSemibold" LineBreakMode="TailTruncation" />
+                                        <Label Grid.Column="1" Text="{Binding AmountDisplay}" FontFamily="OpenSansSemibold" />
+                                        <Label Grid.Row="1" Grid.ColumnSpan="2" FontSize="12" TextColor="#C62828">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="{Binding LateText}" />
+                                                    <Span Text=" · " />
+                                                    <Span Text="{Binding ReminderText}" />
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
+                                        <Button Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding ActionText}" IsVisible="{Binding CanRemind}"
+                                                Command="{Binding RemindCommand, Source={RelativeSource AncestorType={x:Type vm:DashboardViewModel}}, x:DataType=vm:DashboardViewModel}"
+                                                CommandParameter="{Binding .}" HeightRequest="38" Padding="12,0" Margin="0,6,0,0"
+                                                HorizontalOptions="Start" BackgroundColor="#C62828" TextColor="White" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Devis en attente -->
+            <Border Style="{StaticResource Card}">
+                <VerticalStackLayout>
+                    <Label Text="Devis" FontFamily="OpenSansSemibold" FontSize="16" />
+                    <Label Text="{Binding PendingQuotesText}" Style="{StaticResource Secondary}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Sauvegarde -->
+            <Label Text="{Binding BackupText}" Style="{StaticResource Secondary}" HorizontalTextAlignment="Center">
+                <Label.Triggers>
+                    <DataTrigger TargetType="Label" Binding="{Binding IsBackupOverdue}" Value="True">
+                        <Setter Property="TextColor" Value="#E08A00" />
+                    </DataTrigger>
+                </Label.Triggers>
+            </Label>
+            <Label Text="{Binding OtherCurrenciesNote}" Style="{StaticResource Secondary}" FontSize="12"
+                   HorizontalTextAlignment="Center" Margin="0,0,0,16" />
+        </VerticalStackLayout>
+    </ScrollView>
+</views:BasePage>

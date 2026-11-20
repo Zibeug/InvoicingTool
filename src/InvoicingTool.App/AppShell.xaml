@@ -6,13 +6,17 @@
     xmlns:views="clr-namespace:InvoicingTool.App.Views"
     Title="Devis &amp; Factures">
 
+    <!-- 5 onglets au maximum (au-delà, Android les cache sous « Plus ») :
+         devis et factures sont regroupés sous « Documents », avec deux onglets en haut. -->
     <TabBar>
+        <ShellContent Title="Accueil" Icon="tab_dashboard.png" Route="dashboard"
+                      ContentTemplate="{DataTemplate views:DashboardPage}" />
         <ShellContent Title="Clients" Icon="tab_clients.png" Route="clients"
                       ContentTemplate="{DataTemplate views:ClientsPage}" />
-        <ShellContent Title="Devis" Icon="tab_quotes.png" Route="quotes"
-                      ContentTemplate="{DataTemplate views:QuotesPage}" />
-        <ShellContent Title="Factures" Icon="tab_invoices.png" Route="invoices"
-                      ContentTemplate="{DataTemplate views:InvoicesPage}" />
+        <Tab Title="Documents" Icon="tab_invoices.png" Route="documents">
+            <ShellContent Title="Devis" Route="quotes" ContentTemplate="{DataTemplate views:QuotesPage}" />
+            <ShellContent Title="Factures" Route="invoices" ContentTemplate="{DataTemplate views:InvoicesPage}" />
+        </Tab>
         <ShellContent Title="Articles" Icon="tab_catalog.png" Route="catalog"
                       ContentTemplate="{DataTemplate views:CatalogPage}" />
         <ShellContent Title="Entreprise" Icon="tab_settings.png" Route="settings"

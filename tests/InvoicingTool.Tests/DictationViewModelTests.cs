@@ -121,7 +121,7 @@ public class DictationViewModelTests
         await t.Clients.SaveAsync(client);
         var doc = await t.Service.CreateDraftAsync(DocumentType.Invoice, client);
         var nav = new FakeNavigation();
-        var editor = new DocumentEditViewModel(t.Documents, t.Service, t.Settings, t.Catalog, nav, new FakeDialogs());
+        var editor = new DocumentEditViewModel(t.Documents, t.Service, t.Settings, t.Catalog, t.Reminders, nav, new FakeDialogs());
         editor.ApplyParameters(new Dictionary<string, object> { [Routes.IdParameter] = doc.Id });
         await editor.OnAppearingAsync();
 

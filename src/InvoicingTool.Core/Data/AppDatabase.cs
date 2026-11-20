@@ -43,6 +43,7 @@ public sealed class AppDatabase : IAsyncDisposable
                     typeof(CommercialDocument),
                     typeof(DocumentLine),
                     typeof(DocumentSignature),
+                    typeof(PaymentReminder),
                     typeof(CompanySettings),
                     typeof(NumberSequence)).ConfigureAwait(false);
                 _initialized = true;

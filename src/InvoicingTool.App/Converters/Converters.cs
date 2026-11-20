@@ -8,7 +8,7 @@ namespace InvoicingTool.App.Converters;
 public sealed class DocumentStatusTextConverter : IValueConverter
 {
 	public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
-		value is CommercialDocument doc ? DisplayText.Status(doc.Type, doc.Status) : string.Empty;
+		value is CommercialDocument doc ? DisplayText.StatusFor(doc, DateTime.Today) : string.Empty;
 
 	public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
 		throw new NotSupportedException();
@@ -17,7 +17,7 @@ public sealed class DocumentStatusTextConverter : IValueConverter
 public sealed class DocumentStatusColorConverter : IValueConverter
 {
 	public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
-		value is not CommercialDocument doc ? Colors.Gray : doc.Status switch
+		value is not CommercialDocument doc ? Colors.Gray : DisplayText.IsOverdue(doc, DateTime.Today) ? Color.FromArgb("#C62828") : doc.Status switch
 		{
 			DocumentStatus.Draft => Color.FromArgb("#8A8A8A"),
 			DocumentStatus.Issued => Color.FromArgb("#E08A00"),
@@ -44,6 +44,16 @@ public sealed class HexToColorConverter : IValueConverter
 {
 	public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
 		value is string hex && Color.TryParse(hex, out var color) ? color : Colors.Transparent;
+
+	public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+		throw new NotSupportedException();
+}
+
+/// <summary>Vrai si le texte n'est pas vide (afficher une section seulement quand elle a du contenu).</summary>
+public sealed class IsNotEmptyConverter : IValueConverter
+{
+	public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+		value is string text && !string.IsNullOrWhiteSpace(text);
 
 	public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
 		throw new NotSupportedException();

@@ -32,6 +32,29 @@ public class DocumentRepository(AppDatabase database, TimeProvider clock) : Repo
         return docs.OrderByDescending(d => d.IssueDate).ToList();
     }
 
+    /// <summary>Rappels d'une facture, du plus ancien au plus récent.</summary>
+    public async Task<List<PaymentReminder>> GetRemindersAsync(Guid documentId)
+    {
+        var db = await Database.GetConnectionAsync().ConfigureAwait(false);
+        var reminders = await db.Table<PaymentReminder>()
+            .Where(r => r.DocumentId == documentId && !r.IsDeleted)
+            .ToListAsync().ConfigureAwait(false);
+        return reminders.OrderBy(r => r.Level).ToList();
+    }
+
+    public async Task<List<PaymentReminder>> GetAllRemindersAsync()
+    {
+        var db = await Database.GetConnectionAsync().ConfigureAwait(false);
+        return await db.Table<PaymentReminder>().Where(r => !r.IsDeleted).ToListAsync().ConfigureAwait(false);
+    }
+
+    public async Task<PaymentReminder?> GetReminderAsync(Guid reminderId)
+    {
+        var db = await Database.GetConnectionAsync().ConfigureAwait(false);
+        return await db.Table<PaymentReminder>().Where(r => r.Id == reminderId && !r.IsDeleted)
+            .FirstOrDefaultAsync().ConfigureAwait(false);
+    }
+
     public async Task<DocumentSignature?> GetSignatureAsync(Guid documentId)
     {
         var db = await Database.GetConnectionAsync().ConfigureAwait(false);

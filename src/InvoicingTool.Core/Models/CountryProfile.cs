@@ -44,6 +44,12 @@ public sealed record CountryProfile
 
     public string QuoteAcceptanceText { get; init; } = "Bon pour accord — date et signature du client :";
 
+    /// <summary>
+    /// Chiffre d'affaires annuel au-delà duquel l'assujettissement à la TVA devient obligatoire, dans la devise du pays.
+    /// Null lorsque la règle est trop variable pour être proposée par défaut (l'utilisateur peut la saisir).
+    /// </summary>
+    public decimal? VatRegistrationThreshold { get; init; }
+
     /// <summary>Pas d'arrondi du total TTC (0,05 en Suisse, 0,01 ailleurs).</summary>
     public decimal RoundingIncrement { get; init; } = 0.01m;
 }
@@ -87,6 +93,7 @@ public static class CountryProfiles
         VatNumberExample = "CHE-123.456.789 TVA",
         DefaultPaymentTerms = "Payable à 30 jours net.",
         RoundingIncrement = 0.05m,
+        VatRegistrationThreshold = 100_000m,
     };
 
     public static readonly CountryProfile Belgium = new()

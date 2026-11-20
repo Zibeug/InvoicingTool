@@ -44,11 +44,18 @@ public static class SwissQrBill
     /// QR-facture d'un document, ou null si elle ne s'applique pas (devis, autre devise, facture payée ou annulée,
     /// réglage désactivé, informations de l'entreprise incomplètes).
     /// </summary>
-    public static Bill? Create(CommercialDocument doc, CompanySettings company)
+    public static Bill? Create(CommercialDocument doc, CompanySettings company) =>
+        Create(doc, company, doc.TotalInclTax, doc.Number is null ? "Facture" : $"Facture {doc.Number}");
+
+    /// <summary>
+    /// QR-facture avec un montant et un message donnés (rappel : facture + frais). La référence RF reste celle
+    /// de la facture, pour que la banque rapproche aussi les paiements reçus après un rappel.
+    /// </summary>
+    public static Bill? Create(CommercialDocument doc, CompanySettings company, decimal amount, string message)
     {
         if (!company.QrBillEnabled || doc.Type != DocumentType.Invoice ||
             doc.Status is not (DocumentStatus.Draft or DocumentStatus.Issued) ||
-            doc.CurrencyCode != "CHF" || doc.TotalInclTax <= 0 || CompanyIssues(company).Count > 0)
+            doc.CurrencyCode != "CHF" || amount <= 0 || CompanyIssues(company).Count > 0)
             return null;
 
         var bill = new Bill
@@ -56,10 +63,10 @@ public static class SwissQrBill
             Account = Iban.Normalize(company.Iban),
             Creditor = StructuredAddress(company.CompanyName, company.Address, company.PostalCode, company.City,
                 CountryProfiles.Switzerland.Code),
-            Amount = doc.TotalInclTax,
+            Amount = amount,
             Currency = "CHF",
             Debtor = Debtor(doc),
-            UnstructuredMessage = doc.Number is null ? "Facture" : $"Facture {doc.Number}",
+            UnstructuredMessage = message,
             Format = new BillFormat
             {
                 Language = Language.FR,

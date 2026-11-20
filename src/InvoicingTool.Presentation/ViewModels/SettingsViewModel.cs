@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using InvoicingTool.Core.Data;
@@ -19,6 +20,7 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly INavigationService _navigation;
     private readonly IImagePickerService _imagePicker;
     private readonly DocumentService _documents;
+    private readonly AccountingExportService _export;
     private readonly TimeProvider _clock;
     private CompanySettings _company = new();
     private int _loadedNextQuote;
@@ -32,11 +34,13 @@ public partial class SettingsViewModel : ViewModelBase
         IFilePickerService filePicker,
         IImagePickerService imagePicker,
         DocumentService documents,
+        AccountingExportService export,
         INavigationService navigation,
         TimeProvider clock,
         IDialogService dialogs) : base(dialogs)
     {
         _imagePicker = imagePicker;
+        _export = export;
         _documents = documents;
         _clock = clock;
         _settings = settings;
@@ -109,6 +113,19 @@ public partial class SettingsViewModel : ViewModelBase
     private bool _vatExempt;
 
     [ObservableProperty] private string _lastBackupDisplay = "Jamais";
+
+    // Rappels de paiement
+    [ObservableProperty] private string _reminderFee1Text = "0";
+    [ObservableProperty] private string _reminderFee2Text = "0";
+    [ObservableProperty] private string _reminderFee3Text = "0";
+    [ObservableProperty] private string _reminderDelayDaysText = "10";
+
+    /// <summary>Seuil d'assujettissement à la TVA pour l'alerte du tableau de bord (vide = pas d'alerte).</summary>
+    [ObservableProperty] private string _vatThresholdText = string.Empty;
+
+    // Export pour la fiduciaire
+    public ObservableCollection<int> ExportYears { get; } = [];
+    [ObservableProperty] private int _selectedExportYear;
     [ObservableProperty] private string _termsAcceptedDisplay = string.Empty;
 
     public bool IsVatRegistered => !VatExempt;
@@ -159,6 +176,12 @@ public partial class SettingsViewModel : ViewModelBase
             QuotePrefix = _company.QuotePrefix;
             InvoicePrefix = _company.InvoicePrefix;
             PaymentTerms = _company.PaymentTerms;
+            ReminderFee1Text = DecimalParser.Format(_company.ReminderFee1);
+            ReminderFee2Text = DecimalParser.Format(_company.ReminderFee2);
+            ReminderFee3Text = DecimalParser.Format(_company.ReminderFee3);
+            ReminderDelayDaysText = _company.ReminderDelayDays.ToString();
+            var threshold = _company.VatRegistrationThreshold ?? _company.Country.VatRegistrationThreshold;
+            VatThresholdText = threshold is { } t ? DecimalParser.Format(t) : string.Empty;
             _loadedNextQuote = await _documents.GetNextNumberAsync(DocumentType.Quote, Year);
             _loadedNextInvoice = await _documents.GetNextNumberAsync(DocumentType.Invoice, Year);
             NextQuoteNumberText = _loadedNextQuote.ToString();
@@ -174,6 +197,12 @@ public partial class SettingsViewModel : ViewModelBase
         }
         IsSwitzerland = SelectedCountry.Code == CountryProfiles.Switzerland.Code;
         UpdateQrBillStatus();
+
+        var years = await _export.GetYearsAsync();
+        ExportYears.Clear();
+        foreach (var year in years)
+            ExportYears.Add(year);
+        SelectedExportYear = years[0];
     }
 
     partial void OnVatExemptChanged(bool value)
@@ -270,6 +299,23 @@ public partial class SettingsViewModel : ViewModelBase
             await Dialogs.AlertAsync("Paramètres", "L'IBAN saisi n'est pas valide. Vérifiez qu'il n'y a pas de faute de frappe.");
             return;
         }
+        if (!DecimalParser.TryParse(ReminderFee1Text, out var fee1) || !DecimalParser.TryParse(ReminderFee2Text, out var fee2) ||
+            !DecimalParser.TryParse(ReminderFee3Text, out var fee3) || fee1 < 0 || fee2 < 0 || fee3 < 0 ||
+            !int.TryParse(ReminderDelayDaysText, out var reminderDelay) || reminderDelay < 1)
+        {
+            await Dialogs.AlertAsync("Paramètres", "Vérifiez les frais de rappel et le délai (au moins 1 jour).");
+            return;
+        }
+        decimal? vatThreshold = null;
+        if (!string.IsNullOrWhiteSpace(VatThresholdText))
+        {
+            if (!DecimalParser.TryParse(VatThresholdText, out var parsedThreshold) || parsedThreshold < 0)
+            {
+                await Dialogs.AlertAsync("Paramètres", "Le seuil de TVA doit être un montant (ex. 100000).");
+                return;
+            }
+            vatThreshold = parsedThreshold;
+        }
         var accent = ImageData.NormalizeColor(AccentColor, string.Empty);
         if (accent.Length == 0)
         {
@@ -315,6 +361,12 @@ public partial class SettingsViewModel : ViewModelBase
         _company.QuotePrefix = QuotePrefix.Trim();
         _company.InvoicePrefix = InvoicePrefix.Trim();
         _company.PaymentTerms = PaymentTerms;
+        _company.ReminderFee1 = fee1;
+        _company.ReminderFee2 = fee2;
+        _company.ReminderFee3 = fee3;
+        _company.ReminderDelayDays = reminderDelay;
+        // 0 = alerte désactivée ; vide = valeur habituelle du pays.
+        _company.VatRegistrationThreshold = vatThreshold;
         await _settings.SaveAsync(_company);
         await Dialogs.AlertAsync("Paramètres", "Informations enregistrées.");
     });
@@ -374,6 +426,15 @@ public partial class SettingsViewModel : ViewModelBase
         if (hex is not null)
             AccentColor = hex;
     }
+
+    /// <summary>Fichier ZIP de l'année pour la fiduciaire : factures (CSV + PDF), TVA, journal Banana.</summary>
+    [RelayCommand]
+    private Task ExportAccountingAsync() => RunAsync(async () =>
+    {
+        var year = SelectedExportYear;
+        var content = await _export.ExportYearAsync(year);
+        await _share.ShareFileAsync(AccountingExportService.FileName(year), content, "application/zip", $"Export fiduciaire {year}");
+    });
 
     [RelayCommand]
     private Task ShowTermsAsync() => _navigation.GoToAsync(Routes.Terms);

@@ -41,6 +41,9 @@ public static class MauiProgram
 		services.AddSingleton<SettingsRepository>();
 		services.AddSingleton<DocumentService>();
 		services.AddSingleton<BackupService>();
+		services.AddSingleton<ReminderService>();
+		services.AddSingleton<DashboardService>();
+		services.AddSingleton<AccountingExportService>();
 
 		// Services d'interface
 		services.AddSingleton<INavigationService, ShellNavigationService>();
@@ -52,6 +55,7 @@ public static class MauiProgram
 		services.AddSingleton<StartupCoordinator>();
 
 		// Écrans
+		services.AddTransient<DashboardViewModel>().AddTransient<DashboardPage>();
 		services.AddTransient<ClientsViewModel>().AddTransient<ClientsPage>();
 		services.AddTransient<ClientEditViewModel>().AddTransient<ClientEditPage>();
 		services.AddTransient<ClientPickerViewModel>().AddTransient<ClientPickerPage>();

@@ -24,6 +24,25 @@ public class CompanySettings : EntityBase
     /// <summary>Logo de l'entreprise (PNG ou JPEG, déjà réduit), imprimé en haut des documents.</summary>
     public byte[]? Logo { get; set; }
 
+    /// <summary>
+    /// Seuil de chiffre d'affaires annuel à partir duquel l'entreprise doit s'inscrire à la TVA
+    /// (CHF 100 000 en Suisse). Sert à l'alerte du tableau de bord ; null = pas d'alerte.
+    /// </summary>
+    public decimal? VatRegistrationThreshold { get; set; } = CountryProfiles.France.VatRegistrationThreshold;
+
+    // Rappels de paiement : frais par niveau et délai accordé à chaque rappel.
+    public decimal ReminderFee1 { get; set; }
+    public decimal ReminderFee2 { get; set; }
+    public decimal ReminderFee3 { get; set; }
+    public int ReminderDelayDays { get; set; } = 10;
+
+    public decimal ReminderFee(int level) => level switch
+    {
+        1 => ReminderFee1,
+        2 => ReminderFee2,
+        _ => ReminderFee3,
+    };
+
     /// <summary>Ajoute la QR-facture suisse (section paiement) aux factures en CHF.</summary>
     public bool QrBillEnabled { get; set; } = true;
 
@@ -80,6 +99,7 @@ public class CompanySettings : EntityBase
         VatExemptionMention = profile.TaxExemptionMention;
         PaymentTerms = profile.DefaultPaymentTerms;
         RoundingIncrement = profile.RoundingIncrement;
+        VatRegistrationThreshold = profile.VatRegistrationThreshold;
     }
 
     public static string FormatRates(IEnumerable<decimal> rates) =>

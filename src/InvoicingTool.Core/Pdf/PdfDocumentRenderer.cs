@@ -207,10 +207,9 @@ public static class PdfDocumentRenderer
     private static void AddLines(Section section, PrintableDocument p, Unit width, Color accent)
     {
         // Colonnes : désignation | qté | unité | prix unitaire | (taxe) | total
-        var fixedWidths = new List<(string Header, double Ratio, bool Right)>
-        {
-            ("Qté", 0.08, true), ("Unité", 0.09, false), (p.UnitPriceHeader, 0.15, true),
-        };
+        var fixedWidths = p.ShowQuantities
+            ? new List<(string Header, double Ratio, bool Right)> { ("Qté", 0.08, true), ("Unité", 0.09, false), (p.UnitPriceHeader, 0.15, true) }
+            : [];
         if (p.ShowTax) fixedWidths.Add((p.TaxName, 0.08, true));
         fixedWidths.Add((p.TotalHeader, 0.16, true));
         var descriptionRatio = 1 - fixedWidths.Sum(c => c.Ratio);
@@ -239,7 +238,7 @@ public static class PdfDocumentRenderer
             row.Borders.Bottom.Color = LineColor;
             row.Borders.Bottom.Width = 0.5;
             row.Cells[0].AddParagraph(line.Description);
-            var values = new List<string> { line.Quantity, line.Unit, line.UnitPrice };
+            var values = p.ShowQuantities ? new List<string> { line.Quantity, line.Unit, line.UnitPrice } : [];
             if (p.ShowTax) values.Add(line.TaxRate);
             values.Add(line.Total);
             for (var i = 0; i < values.Count; i++)

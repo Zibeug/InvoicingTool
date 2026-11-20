@@ -18,6 +18,7 @@ public partial class DocumentPreviewViewModel(
     public const string PdfContentType = "application/pdf";
 
     private Guid _documentId;
+    private Guid? _reminderId;
     private PrintableDocument? _printable;
 
     [ObservableProperty]
@@ -27,6 +28,7 @@ public partial class DocumentPreviewViewModel(
     {
         if (parameters.TryGetValue(Routes.IdParameter, out var id))
             _documentId = (Guid)id;
+        _reminderId = parameters.TryGetValue(Routes.ReminderParameter, out var reminder) ? (Guid)reminder : null;
     }
 
     public override async Task OnAppearingAsync()
@@ -36,6 +38,16 @@ public partial class DocumentPreviewViewModel(
             return;
         var lines = await service.GetLinesAsync(document.Id);
         var company = await settings.GetSettingsAsync();
+
+        if (_reminderId is { } reminderId && await documents.GetReminderAsync(reminderId) is { } reminder)
+        {
+            // Rappel de paiement : document à part, avec frais, nouveau délai et QR-facture du montant total.
+            var reminders = await documents.GetRemindersAsync(document.Id);
+            _printable = ReminderService.BuildPrintable(reminder, reminders, document, company);
+            Title = $"{reminder.LevelName} {document.DisplayNumber}";
+            Html = HtmlDocumentRenderer.Render(_printable);
+            return;
+        }
 
         var signature = await documents.GetSignatureAsync(document.Id);
         _printable = PrintableDocument.Build(document, lines, company, signature);

@@ -122,6 +122,37 @@
                 <Button Text="Supprimer le brouillon" Command="{Binding DeleteCommand}" Style="{StaticResource DangerButton}" />
             </VerticalStackLayout>
 
+            <!-- Paiement et rappels (facture émise) -->
+            <Border Style="{StaticResource Card}" Margin="0,12,0,0" IsVisible="{Binding PaymentInfo, Converter={StaticResource IsNotEmpty}}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Paiement" FontFamily="OpenSansSemibold" FontSize="16" />
+                    <Label Text="{Binding PaymentInfo}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding IsOverdue}" Value="True">
+                                <Setter Property="TextColor" Value="#C62828" />
+                                <Setter Property="FontFamily" Value="OpenSansSemibold" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Reminders}" Spacing="4" IsVisible="{Binding HasReminders}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ReminderRow">
+                                <Label Text="{Binding Text}" FontSize="13" TextDecorations="Underline"
+                                       TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}">
+                                    <Label.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding OpenReminderCommand, Source={RelativeSource AncestorType={x:Type vm:DocumentEditViewModel}}, x:DataType=vm:DocumentEditViewModel}"
+                                            CommandParameter="{Binding .}" />
+                                    </Label.GestureRecognizers>
+                                </Label>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                    <Button Text="{Binding RemindButtonText}" Command="{Binding RemindCommand}" IsVisible="{Binding CanRemind}"
+                            BackgroundColor="#C62828" TextColor="White" />
+                </VerticalStackLayout>
+            </Border>
+
             <!-- Actions document émis -->
             <VerticalStackLayout IsVisible="{Binding IsEditable, Converter={StaticResource Not}}" Spacing="8" Margin="0,12,0,0">
                 <Button Text="Faire signer le client" Command="{Binding SignCommand}" IsVisible="{Binding CanSign}" />

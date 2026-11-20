@@ -29,7 +29,7 @@ public class ViewModelTests
         var doc = await t.Service.CreateDraftAsync(DocumentType.Quote, client);
         var nav = new FakeNavigation();
         var dialogs = new FakeDialogs();
-        var vm = new DocumentEditViewModel(t.Documents, t.Service, t.Settings, t.Catalog, nav, dialogs);
+        var vm = new DocumentEditViewModel(t.Documents, t.Service, t.Settings, t.Catalog, t.Reminders, nav, dialogs);
         vm.ApplyParameters(new Dictionary<string, object> { [Routes.IdParameter] = doc.Id });
         await vm.OnAppearingAsync();
         return (vm, doc, nav, dialogs);

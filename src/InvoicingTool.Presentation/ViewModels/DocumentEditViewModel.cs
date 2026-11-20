@@ -8,6 +8,9 @@ using InvoicingTool.Presentation.Abstractions;
 
 namespace InvoicingTool.Presentation.ViewModels;
 
+/// <summary>Rappel envoyé, affiché dans l'historique de la facture.</summary>
+public sealed record ReminderRow(PaymentReminder Reminder, string Text);
+
 /// <summary>Édition d'un devis ou d'une facture, utilisable directement chez le client.</summary>
 public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
 {
@@ -16,6 +19,7 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
     private readonly SettingsRepository _settings;
     private readonly CatalogRepository _catalog;
     private readonly INavigationService _navigation;
+    private readonly ReminderService _reminders;
 
     private Guid _documentId;
     private CommercialDocument _document = new();
@@ -29,9 +33,11 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
         DocumentService service,
         SettingsRepository settings,
         CatalogRepository catalog,
+        ReminderService reminders,
         INavigationService navigation,
         IDialogService dialogs) : base(dialogs)
     {
+        _reminders = reminders;
         _documents = documents;
         _service = service;
         _settings = settings;
@@ -40,6 +46,15 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
     }
 
     public ObservableCollection<LineItemViewModel> Lines { get; } = [];
+
+    /// <summary>Rappels déjà envoyés pour cette facture.</summary>
+    public ObservableCollection<ReminderRow> Reminders { get; } = [];
+
+    [ObservableProperty] private string? _paymentInfo;
+    [ObservableProperty] private bool _isOverdue;
+    [ObservableProperty] private bool _canRemind;
+    [ObservableProperty] private string _remindButtonText = "Envoyer un rappel";
+    [ObservableProperty] private bool _hasReminders;
 
     [ObservableProperty] private string? _subject;
     [ObservableProperty] private DateTime _issueDate = DateTime.Today;
@@ -113,6 +128,7 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
             AddLineViewModel(line);
 
         RefreshState();
+        await RefreshRemindersAsync();
         _loaded = true;
     }
 
@@ -194,6 +210,7 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
             return;
         await _service.IssueAsync(_document);
         RefreshState();
+        await RefreshRemindersAsync();
     });
 
     [RelayCommand]
@@ -222,7 +239,59 @@ public partial class DocumentEditViewModel : ViewModelBase, IParameterReceiver
 
         await _service.SetStatusAsync(_document, targets[index]);
         RefreshState();
+        await RefreshRemindersAsync();
     });
+
+    /// <summary>Crée le rappel suivant (avec frais et nouveau délai) et ouvre son PDF pour l'envoyer.</summary>
+    [RelayCommand]
+    private Task RemindAsync() => RunAsync(async () =>
+    {
+        if (!await Dialogs.ConfirmAsync("Rappel", $"{RemindButtonText} pour cette facture ?", "Créer le rappel", "Annuler"))
+            return;
+        var reminder = await _reminders.CreateNextAsync(_document);
+        await RefreshRemindersAsync();
+        await OpenReminderPreviewAsync(reminder.Id);
+    });
+
+    [RelayCommand]
+    private Task OpenReminderAsync(ReminderRow? row) => row is null ? Task.CompletedTask : OpenReminderPreviewAsync(row.Reminder.Id);
+
+    private Task OpenReminderPreviewAsync(Guid reminderId) => _navigation.GoToAsync(Routes.DocumentPreview,
+        new Dictionary<string, object> { [Routes.IdParameter] = _document.Id, [Routes.ReminderParameter] = reminderId });
+
+    /// <summary>État de paiement et de relance d'une facture émise.</summary>
+    private async Task RefreshRemindersAsync()
+    {
+        Reminders.Clear();
+        if (_document.Type != DocumentType.Invoice || _document.IsEditable)
+        {
+            PaymentInfo = null;
+            IsOverdue = CanRemind = HasReminders = false;
+            return;
+        }
+
+        var state = await _reminders.GetStateAsync(_document);
+        foreach (var r in state.Reminders)
+        {
+            Reminders.Add(new ReminderRow(r,
+                $"{r.LevelName} du {_money.Date(r.ReminderDate)} · {_money.Format(r.TotalDue)} à payer d'ici au {_money.Date(r.NewDueDate)}"));
+        }
+        HasReminders = Reminders.Count > 0;
+        IsOverdue = state.IsOverdue;
+        CanRemind = state.NextLevel is not null;
+        if (state.NextLevel is { } level)
+            RemindButtonText = $"Envoyer le {PaymentReminder.LevelLabel(level).ToLowerInvariant()}";
+
+        PaymentInfo = _document.Status switch
+        {
+            DocumentStatus.Paid when _document.PaidDate is { } paid => $"Payée le {_money.Date(paid)}",
+            DocumentStatus.Issued when state.IsOverdue && state.NextLevel is null && state.LastReminder is { } last =>
+                $"En retard de {state.DaysLate} j · délai du {last.LevelName.ToLowerInvariant()} jusqu'au {_money.Date(last.NewDueDate)}",
+            DocumentStatus.Issued when state.IsOverdue => $"En retard de {state.DaysLate} j",
+            DocumentStatus.Issued when _document.DueDate is { } due => $"À payer d'ici au {_money.Date(due)}",
+            _ => null,
+        };
+    }
 
     /// <summary>Dicter des lignes à voix haute. Le brouillon est d'abord enregistré pour ne rien perdre.</summary>
     [RelayCommand]

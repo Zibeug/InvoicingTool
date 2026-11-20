@@ -103,7 +103,7 @@ public class BrandingAndSignatureTests
     {
         await using var t = new TestDatabase();
         var quote = await IssueQuoteAsync(t);
-        var vm = new DocumentEditViewModel(t.Documents, t.Service, t.Settings, t.Catalog, new FakeNavigation(), new FakeDialogs());
+        var vm = new DocumentEditViewModel(t.Documents, t.Service, t.Settings, t.Catalog, t.Reminders, new FakeNavigation(), new FakeDialogs());
         vm.ApplyParameters(new Dictionary<string, object> { [Routes.IdParameter] = quote.Id });
 
         await vm.OnAppearingAsync();
