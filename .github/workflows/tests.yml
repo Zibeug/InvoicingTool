@@ -25,10 +25,13 @@ jobs:
         with:
           dotnet-version: '10.0.x'
       - run: dotnet workload install maui
+      # RuntimeIdentifierOverride (et non -r) : l'architecture ne doit s'appliquer qu'à la cible Windows,
+      # pas aux cibles Android / iOS du même projet pendant la restauration des paquets.
       - name: Publier l'application Windows
         run: >
           dotnet publish src/InvoicingTool.App/InvoicingTool.App.csproj
-          -f net10.0-windows10.0.19041.0 -c Release -r win-x64
+          -f net10.0-windows10.0.19041.0 -c Release
+          -p:RuntimeIdentifierOverride=win-x64
           -p:SelfContained=true -p:WindowsAppSDKSelfContained=true
           -o publish/windows
       - uses: actions/upload-artifact@v4
